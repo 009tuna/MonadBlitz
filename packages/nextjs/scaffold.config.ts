@@ -30,7 +30,7 @@ export const monadTestnet = defineChain({
 const scaffoldConfig = {
   // Monad Testnet hedef network olarak ayarlandı
   targetNetworks: [monadTestnet],
-  pollingInterval: 3000,
+  pollingInterval: 30000,
   alchemyApiKey: process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || DEFAULT_ALCHEMY_API_KEY,
   rpcOverrides: {},
   walletConnectProjectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || "3a8170812b534d0ff9d794f19a901d64",

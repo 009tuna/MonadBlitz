@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn deploy *)",
+      "Read(//c/Users/Monster/.nvm/versions/**)",
+      "Bash(command -v nvm)",
+      "Bash(wsl *)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "context7"
+  ]
+}

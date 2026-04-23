@@ -20,7 +20,7 @@ export default function SessionPage() {
   const sessionId = BigInt(params.id as string);
   const [storedAiTeacherAddress, setStoredAiTeacherAddress] = useState("");
 
-  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  const [now, setNow] = useState(0);
   const [isStopping, setIsStopping] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
@@ -40,6 +40,7 @@ export default function SessionPage() {
   const { writeContractAsync: writeContract } = useScaffoldWriteContract("StreamingTutorEscrow");
 
   useEffect(() => {
+    setNow(Math.floor(Date.now() / 1000));
     const timer = window.setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
     return () => window.clearInterval(timer);
   }, []);

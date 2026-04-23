@@ -43,7 +43,7 @@ const Home: NextPage = () => {
   const [selectedTeacherAddress, setSelectedTeacherAddress] = useState<string>(AI_TEACHERS[0].address);
   const [currentSessionId, setCurrentSessionId] = useState<bigint | undefined>(undefined);
   const [currentSessionTeacherAddress, setCurrentSessionTeacherAddress] = useState<string | undefined>(undefined);
-  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  const [now, setNow] = useState(0);
   const [isDepositing, setIsDepositing] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
@@ -113,6 +113,7 @@ const Home: NextPage = () => {
   });
 
   useEffect(() => {
+    setNow(Math.floor(Date.now() / 1000));
     const timer = window.setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
     return () => window.clearInterval(timer);
   }, []);

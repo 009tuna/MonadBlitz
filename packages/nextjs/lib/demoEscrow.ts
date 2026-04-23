@@ -218,6 +218,17 @@ export const useDemoEscrowWriteContract = (connectedAddress?: string) => {
         return "0xdemo-deposit";
       }
 
+      if (functionName === "withdrawBalance") {
+        const [amount] = args || [];
+        mutateStore(store => {
+          const balance = store.studentBalances[senderKey] || 0n;
+          const withdrawAmount = BigInt(amount as bigint);
+          if (balance < withdrawAmount) throw new Error("Insufficient demo balance");
+          store.studentBalances[senderKey] = balance - withdrawAmount;
+        });
+        return "0xdemo-withdraw";
+      }
+
       if (functionName === "registerTutor") {
         const [name, bio, languages, ratePerSecond] = args || [];
         mutateStore(store => {
@@ -237,6 +248,30 @@ export const useDemoEscrowWriteContract = (connectedAddress?: string) => {
           }
         });
         return "0xdemo-register";
+      }
+
+      if (functionName === "updateTutor") {
+        const [name, bio, languages, ratePerSecond] = args || [];
+        mutateStore(store => {
+          if (!store.tutors[senderKey]) throw new Error("Tutor not registered");
+          store.tutors[senderKey] = {
+            ...store.tutors[senderKey],
+            name: String(name),
+            bio: String(bio),
+            languages: String(languages),
+            ratePerSecond: BigInt(ratePerSecond as bigint),
+          };
+        });
+        return "0xdemo-update";
+      }
+
+      if (functionName === "setTutorActive") {
+        const [active] = args || [];
+        mutateStore(store => {
+          if (!store.tutors[senderKey]) throw new Error("Tutor not registered");
+          store.tutors[senderKey].active = Boolean(active);
+        });
+        return "0xdemo-active";
       }
 
       if (functionName === "startSession") {
