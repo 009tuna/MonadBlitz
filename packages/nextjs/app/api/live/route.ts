@@ -52,8 +52,20 @@ Start by warmly greeting them and asking what they'd like to talk about today.`;
             systemInstruction: {
               parts: [{ text: systemInstruction }],
             },
-            inputAudioTranscription: {},
-            outputAudioTranscription: {},
+            tools: [
+              {
+                functionDeclarations: [
+                  {
+                    name: "stopSession",
+                    description: "Stops the current tutoring session. Call this when the student wants to end the lesson or says goodbye.",
+                    parameters: {
+                      type: "OBJECT",
+                      properties: {},
+                    },
+                  },
+                ],
+              },
+            ],
           },
         },
       },

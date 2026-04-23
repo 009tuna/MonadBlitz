@@ -256,8 +256,9 @@ export function useGeminiLive(): UseGeminiLiveReturn {
             }
           },
           onerror: (e: any) => {
-            console.error("Live API error:", e);
-            setError(e.message || "Baglanti hatasi");
+            console.error("Live API error details:", e);
+            const detailedError = e.message || JSON.stringify(e) || "Unknown connection error";
+            setError(`Baglanti hatasi: ${detailedError}`);
             setIsConnected(false);
             setIsConnecting(false);
           },
