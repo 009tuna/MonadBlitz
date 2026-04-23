@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -108,6 +109,18 @@ export default function TeacherDetailPage() {
       }
     : null;
 
+  useEffect(() => {
+    if (!activeSessionId || activeSessionId <= 0n || activeSession?.status !== 1) {
+      return;
+    }
+
+    const isActiveSessionAI = activeSession.tutor.toLowerCase() === AI_TUTOR_POOL_ADDRESS.toLowerCase();
+    const aiTeacherAddress = isActiveSessionAI ? (isAI ? teacherAddress : AI_TEACHERS[0].address) : "";
+    const suffix = aiTeacherAddress ? `?ai=${encodeURIComponent(aiTeacherAddress)}` : "";
+
+    router.replace(`/session/${activeSessionId.toString()}${suffix}`);
+  }, [activeSession, activeSessionId, isAI, router, teacherAddress]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-20">
@@ -134,17 +147,6 @@ export default function TeacherDetailPage() {
     .map((lang: string) => lang.trim())
     .filter(Boolean);
 
-  useEffect(() => {
-    if (!activeSessionId || activeSessionId <= 0n || activeSession?.status !== 1) {
-      return;
-    }
-
-    const isActiveSessionAI = activeSession.tutor.toLowerCase() === AI_TUTOR_POOL_ADDRESS.toLowerCase();
-    const aiTeacherAddress = isActiveSessionAI ? (isAI ? teacherAddress : AI_TEACHERS[0].address) : "";
-    const suffix = aiTeacherAddress ? `?ai=${encodeURIComponent(aiTeacherAddress)}` : "";
-
-    router.replace(`/session/${activeSessionId.toString()}${suffix}`);
-  }, [activeSession, activeSessionId, isAI, router, teacherAddress]);
 
   const handleFund = async () => {
     if (!connectedAddress || !topUpAmount) return;
@@ -199,7 +201,14 @@ export default function TeacherDetailPage() {
             <div className="card-body items-center text-center">
               {isAI && teacher.avatar ? (
                 <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-500 mb-2">
-                  <img src={teacher.avatar} alt={teacher.name} className="w-full h-full object-cover" />
+                  <Image
+                    src={teacher.avatar}
+                    alt={teacher.name}
+                    width={96}
+                    height={96}
+                    className="w-full h-full object-cover"
+                    unoptimized
+                  />
                 </div>
               ) : (
                 <div className="avatar placeholder mb-2">
@@ -268,7 +277,7 @@ export default function TeacherDetailPage() {
               </h2>
               <p className="text-sm text-base-content/50 mb-6">
                 Local demo modunda bakiye gercek MON transferi yapmadan eklenir. Gercek escrow akisi icin kontrat deploy
-                edilip frontend'e baglanmalidir.
+                edilip frontend&apos;e baglanmalidir.
               </p>
 
               <div className="mb-6">

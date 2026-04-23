@@ -41,14 +41,14 @@ export const AITutorSession = ({
     if (onStudentTranscriptUpdate && live.studentTranscript) {
       onStudentTranscriptUpdate(live.studentTranscript);
     }
-  }, [live.studentTranscript, onStudentTranscriptUpdate]);
+  }, [live.studentTranscript, onStudentTranscriptUpdate, live]);
 
   // Seans bittiginde disconnect
   useEffect(() => {
     if (!isActive && live.isConnected) {
       live.disconnect();
     }
-  }, [isActive, live.isConnected]);
+  }, [isActive, live.isConnected, live]);
 
   const handleConnect = async () => {
     try {
