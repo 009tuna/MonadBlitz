@@ -29,6 +29,7 @@ pgn = "https://rpc.publicgoods.network"
 pgnTestnet = "https://sepolia.publicgoods.network"
 
 
+monadTestnet = "https://testnet-rpc.monad.xyz"
 localhost = "http://127.0.0.1:8545"
 
 [etherscan]

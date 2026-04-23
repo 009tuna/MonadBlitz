@@ -1,12 +1,12 @@
 @import "tailwindcss";
-
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 @theme {
   --shadow-center: 0 0 12px -2px rgb(0 0 0 / 0.05);
   --animate-pulse-fast: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
 @plugin "daisyui" {
@@ -18,22 +18,22 @@
 @plugin "daisyui/theme" {
   name: "light";
 
-  --color-primary: #93bbfb;
-  --color-primary-content: #212638;
-  --color-secondary: #dae8ff;
-  --color-secondary-content: #212638;
-  --color-accent: #93bbfb;
-  --color-accent-content: #212638;
-  --color-neutral: #212638;
+  --color-primary: #6366f1;
+  --color-primary-content: #ffffff;
+  --color-secondary: #a855f7;
+  --color-secondary-content: #ffffff;
+  --color-accent: #6366f1;
+  --color-accent-content: #ffffff;
+  --color-neutral: #1e1b4b;
   --color-neutral-content: #ffffff;
   --color-base-100: #ffffff;
-  --color-base-200: #f4f8ff;
-  --color-base-300: #dae8ff;
-  --color-base-content: #212638;
-  --color-info: #93bbfb;
-  --color-success: #34eeb6;
-  --color-warning: #ffcf72;
-  --color-error: #ff8863;
+  --color-base-200: #f5f3ff;
+  --color-base-300: #ede9fe;
+  --color-base-content: #1e1b4b;
+  --color-info: #6366f1;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
 
   --radius-field: 1rem;
   --radius-box: 1rem;
@@ -43,22 +43,22 @@
 @plugin "daisyui/theme" {
   name: "dark";
 
-  --color-primary: #212638;
-  --color-primary-content: #f9fbff;
-  --color-secondary: #323f61;
-  --color-secondary-content: #f9fbff;
-  --color-accent: #4969a6;
-  --color-accent-content: #f9fbff;
-  --color-neutral: #f9fbff;
-  --color-neutral-content: #385183;
-  --color-base-100: #385183;
-  --color-base-200: #2a3655;
-  --color-base-300: #212638;
-  --color-base-content: #f9fbff;
-  --color-info: #385183;
-  --color-success: #34eeb6;
-  --color-warning: #ffcf72;
-  --color-error: #ff8863;
+  --color-primary: #818cf8;
+  --color-primary-content: #ffffff;
+  --color-secondary: #c084fc;
+  --color-secondary-content: #ffffff;
+  --color-accent: #818cf8;
+  --color-accent-content: #ffffff;
+  --color-neutral: #e0e7ff;
+  --color-neutral-content: #312e81;
+  --color-base-100: #0f0a2e;
+  --color-base-200: #080520;
+  --color-base-300: #050316;
+  --color-base-content: #e0e7ff;
+  --color-info: #818cf8;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
 
   --radius-field: 1rem;
   --radius-box: 1rem;
@@ -71,9 +71,6 @@
   The default border color has changed to `currentColor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
   looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
 */
 @layer base {
   *,
@@ -90,6 +87,7 @@
 
   body {
     min-height: 100vh;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   }
 
   h1,
@@ -121,4 +119,205 @@
 
 .link:hover {
   opacity: 80%;
+}
+
+/* ========================================
+   SpeakStream Premium Animations & Effects
+   ======================================== */
+
+/* Flow animation for payment stream */
+@keyframes flow {
+  0%, 100% { opacity: 0.4; transform: scaleX(0.8); }
+  50% { opacity: 1; transform: scaleX(1); }
+}
+
+.animate-flow {
+  animation: flow 2s ease-in-out infinite;
+}
+
+/* Counter animation */
+@keyframes counter-up {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-counter {
+  animation: counter-up 0.3s ease-out;
+}
+
+/* Pulse green for active indicators */
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+  50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+}
+
+.animate-pulse-green {
+  animation: pulse-green 2s infinite;
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #818cf8 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 3s ease-in-out infinite;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+}
+
+/* Glow effect for cards */
+.glow-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.glow-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Shimmer effect for loading states */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(129, 140, 248, 0.1) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* Orb glow for hero section */
+@keyframes orb-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+.orb {
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: orb-pulse 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.orb-indigo {
+  background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+}
+
+.orb-purple {
+  background: radial-gradient(circle, #a855f7 0%, transparent 70%);
+}
+
+.orb-blue {
+  background: radial-gradient(circle, #3b82f6 0%, transparent 70%);
+}
+
+/* Audio waveform bars */
+@keyframes wave-bar {
+  0%, 100% { height: 8px; }
+  50% { height: 24px; }
+}
+
+.wave-bar {
+  width: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(to top, #6366f1, #a855f7);
+  animation: wave-bar 1s ease-in-out infinite;
+}
+
+/* Typing dots */
+@keyframes typing-dot {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-4px); }
+}
+
+.typing-dot {
+  animation: typing-dot 1.4s ease-in-out infinite;
+}
+
+/* Stream flow line */
+@keyframes stream-flow {
+  0% { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.stream-line {
+  stroke-dasharray: 10 5;
+  animation: stream-flow 2s linear infinite;
+}
+
+/* Fade in up for staggered animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+/* Smooth progress bar */
+.progress-smooth {
+  transition: width 1s ease-in-out;
+}
+
+/* Glass morphism */
+.glass {
+  background: rgba(15, 10, 46, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(129, 140, 248, 0.1);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(129, 140, 248, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(129, 140, 248, 0.5);
 }
