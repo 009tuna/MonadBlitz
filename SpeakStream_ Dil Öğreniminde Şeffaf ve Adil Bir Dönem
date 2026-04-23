@@ -1,0 +1,31 @@
+# SpeakStream: Dil Öğreniminde Şeffaf ve Adil Bir Dönem
+
+SpeakStream, Monad Testnet üzerinde çalışan, saniye başına ödeme (pay-per-second) modelli, yapay zeka (AI) destekli, merkeziyetsiz bir dil öğrenme platformudur. Bu platform, hem öğrenciler hem de öğretmenler için geleneksel dil kurslarının getirdiği katı kuralları ve adaletsiz ödeme sistemlerini ortadan kaldırmayı amaçlar.
+
+### Projemiz Nedir ve Hangi Sorunu Çözer?
+
+Geleneksel dil platformlarında öğrenciler genellikle 30 veya 60 dakikalık paketler satın almak zorundadır. Dersin ortasında internet kesilse, öğrenci konuşmasa veya verim almasa bile bu sürenin ücretini tam öder. Öğretmenler ise kazançlarını çekmek için platformun belirlediği uzun süreleri beklemek zorunda kalır.
+
+**SpeakStream bu sorunları şu şekilde çözer:**
+
+| Özellik | SpeakStream Yaklaşımı | Kullanıcıya Faydası |
+| :--- | :--- | :--- |
+| **Ödeme Modeli** | Saniye Başı Akış (Streaming) | Sadece gerçekten konuştuğunuz süre kadar ödersiniz. |
+| **AI Doğrulama** | Gemini 2.5 Flash Analizi | Konuşmadığınız veya sessiz kaldığınız saniyeler için ücret ödemezsiniz. |
+| **Erişilebilirlik** | 7/24 Aktif AI Tutorlar | İstediğiniz an Gemini Live API destekli AI öğretmenlerle sesli pratik yapabilirsiniz. |
+| **Hız ve Maliyet** | Monad Testnet Altyapısı | 400ms blok süresiyle anında ödeme onayı ve neredeyse sıfır gas ücreti. |
+| **Güvenlik** | Akıllı Kontrat Escrow | Ödemeler kontratta kilitlenir, her iki tarafın hakkı kodla korunur. |
+
+### Platform Nasıl Çalışıyor?
+
+Süreç, öğrencinin platformdaki bir öğretmeni (insan veya AI) seçmesiyle başlar. Öğrenci seans süresini belirler ve ilgili MON miktarını akıllı kontratta kilitler. Seans başladığında, tarayıcı üzerinden ses tanıma (Web Speech API) veya doğrudan sesli iletişim (Gemini Live API) devreye girer.
+
+Yapay zeka sistemi, konuşma transcript'ini her 30 saniyede bir analiz eder. Eğer öğrenci hedef dilde anlamlı cümleler kuruyorsa, bu sürenin ücreti kontrattan öğretmene aktarılır. Eğer öğrenci sessiz kalırsa veya farklı bir dilde konuşursa, o sürenin ücreti kilitli bakiyeden düşülmez ve seans sonunda öğrenciye iade edilir.
+
+### Neden SpeakStream?
+
+SpeakStream, dil öğrenimini bir "abonelik" veya "paket" olmaktan çıkarıp, gerçek bir "hizmet akışı" haline getirir. 
+
+> "Konuştuğun kadar öde, öğrendiğin kadar kazan." 
+
+Bu felsefe, Monad'ın paralel işlem gücü ve düşük gecikme süresiyle birleştiğinde, Web3 dünyasının gerçek hayattaki en pratik kullanım örneklerinden birini oluşturur. Öğrenciler için ekonomik bir özgürlük, öğretmenler için ise anında kazanç sağlayan şeffaf bir ekosistem sunar.

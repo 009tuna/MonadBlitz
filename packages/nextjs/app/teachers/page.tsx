@@ -5,6 +5,7 @@ import type { NextPage } from "next";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 import { TeacherCard } from "~~/components/speakstream/TeacherCard";
 import { AI_TEACHERS } from "~~/lib/aiTeachers";
+import { AI_TUTOR_POOL_ADDRESS } from "~~/lib/teacherUtils";
 import { Bot, Search, GraduationCap } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -24,8 +25,14 @@ const TeachersPage: NextPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: teacherAddresses, isLoading: loadingAddresses } = useScaffoldReadContract({
-    contractName: "SpeakStream",
-    functionName: "getAllTeachers",
+    contractName: "StreamingTutorEscrow",
+    functionName: "getAllTutors",
+  });
+
+  const { data: aiPoolTeacher } = useScaffoldReadContract({
+    contractName: "StreamingTutorEscrow",
+    functionName: "getTutor",
+    args: [AI_TUTOR_POOL_ADDRESS],
   });
 
   const filteredAITeachers = AI_TEACHERS.filter(t => {
@@ -104,7 +111,7 @@ const TeachersPage: NextPage = () => {
                   languages={teacher.languages}
                   ratePerSecond={teacher.ratePerSecond}
                   active={teacher.active}
-                  totalEarned={BigInt(0)}
+                  totalEarned={aiPoolTeacher?.totalEarned || BigInt(0)}
                   isAI={true}
                   avatar={teacher.avatar}
                 />
@@ -138,7 +145,11 @@ const TeachersPage: NextPage = () => {
             <a href="/become-teacher" className="btn btn-primary btn-sm">Ogretmen Ol</a>
           </div>
         ) : (
-          <TeacherGrid addresses={teacherAddresses as string[]} filterLang={filterLang} searchQuery={searchQuery} />
+          <TeacherGrid
+            addresses={(teacherAddresses as string[]).filter(address => address.toLowerCase() !== AI_TUTOR_POOL_ADDRESS.toLowerCase())}
+            filterLang={filterLang}
+            searchQuery={searchQuery}
+          />
         )}
       </motion.div>
     </div>
@@ -164,8 +175,8 @@ function TeacherGrid({ addresses, filterLang, searchQuery }: { addresses: string
 
 function TeacherCardWrapper({ address, filterLang, searchQuery }: { address: string; filterLang: string; searchQuery: string }) {
   const { data: teacher } = useScaffoldReadContract({
-    contractName: "SpeakStream",
-    functionName: "getTeacher",
+    contractName: "StreamingTutorEscrow",
+    functionName: "getTutor",
     args: [address],
   });
 

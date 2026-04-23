@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "./DeployHelpers.s.sol";
 import {SpeakStream} from "../contracts/SpeakStream.sol";
@@ -12,7 +12,7 @@ contract DeploySpeakStream is ScaffoldETHDeploy {
     // AI Tutor Pool adresi — tum AI ogretmen seanslari bu adrese akar
     // Bu adres icin private key'e sahip olmalisiniz (veya multisig)
     // Demo icin deployer adresini kullaniyoruz
-    address constant AI_TUTOR_POOL = 0x1234567890AbCdEf1234567890aBcDeF12345678;
+    address constant AI_TUTOR_POOL = 0x1234567890AbcdEF1234567890aBcdef12345678;
 
     function run() external ScaffoldEthDeployerRunner {
         // 1. SpeakStream kontratini deploy et

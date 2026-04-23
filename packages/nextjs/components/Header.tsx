@@ -4,7 +4,7 @@ import React, { useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, MessageCircle, Users, GraduationCap, Trophy, Bug, Radio } from "lucide-react";
-import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
+import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
 
 type HeaderMenuLink = {
@@ -28,6 +28,11 @@ export const menuLinks: HeaderMenuLink[] = [
     label: "Become Teacher",
     href: "/become-teacher",
     icon: <GraduationCap className="h-4 w-4" />,
+  },
+  {
+    label: "Dashboard",
+    href: "/dashboard",
+    icon: <Users className="h-4 w-4" />,
   },
   {
     label: "Leaderboard",
@@ -111,7 +116,6 @@ export const Header = () => {
       </div>
       <div className="navbar-end grow mr-4 gap-2">
         <RainbowKitCustomConnectButton />
-        <FaucetButton />
       </div>
     </div>
   );

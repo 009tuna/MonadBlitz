@@ -20,9 +20,10 @@ export interface AITeacher {
 /**
  * AI Tutor Pool adresi — deploy sirasinda kontrata register edilen adres.
  * Tum AI ogretmen seanslari bu adrese akar.
- * Deploy sonrasi bu adresi guncelle.
+ * Monad deploy sonrasi bu adresi env ile override edin.
  */
-export const AI_TUTOR_POOL_ADDRESS = "0x1234567890AbCdEf1234567890aBcDeF12345678";
+export const AI_TUTOR_POOL_ADDRESS =
+  process.env.NEXT_PUBLIC_AI_TUTOR_POOL_ADDRESS || "0x1234567890AbcdEF1234567890aBcdef12345678";
 
 export const AI_TEACHERS: AITeacher[] = [
   {
@@ -30,7 +31,7 @@ export const AI_TEACHERS: AITeacher[] = [
     name: "Ayse — AI English Tutor",
     bio: "Patient native speaker, great for beginners. Specializes in daily conversation and grammar fundamentals.",
     languages: "en,tr",
-    ratePerSecond: BigInt(1e13), // 0.00001 MON/sn = 0.036 MON/saat
+    ratePerSecond: BigInt(5e15),
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ayse&backgroundColor=6366f1",
     isAI: true,
     persona: "warm, patient, encouraging",
@@ -42,7 +43,7 @@ export const AI_TEACHERS: AITeacher[] = [
     name: "Mehmet — AI Business English",
     bio: "Professional tone. Helps with business meetings, emails, presentations, and interviews.",
     languages: "en,tr",
-    ratePerSecond: BigInt(2e13),
+    ratePerSecond: BigInt(5e15),
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mehmet&backgroundColor=a855f7",
     isAI: true,
     persona: "professional, structured, direct",
@@ -54,7 +55,7 @@ export const AI_TEACHERS: AITeacher[] = [
     name: "Elena — AI Travel Spanish",
     bio: "Casual conversation partner for travelers. Teaches practical Spanish for daily situations.",
     languages: "es,tr,en",
-    ratePerSecond: BigInt(15e12),
+    ratePerSecond: BigInt(5e15),
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Elena&backgroundColor=22c55e",
     isAI: true,
     persona: "friendly, casual, cultural",

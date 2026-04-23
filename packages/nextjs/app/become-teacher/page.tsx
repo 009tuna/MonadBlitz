@@ -33,7 +33,7 @@ export default function BecomeTeacherPage() {
   const [ratePerMinute, setRatePerMinute] = useState("0.006");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { writeContractAsync: registerTeacher } = useScaffoldWriteContract("SpeakStream");
+  const { writeContractAsync: registerTutor } = useScaffoldWriteContract("StreamingTutorEscrow");
 
   const toggleLang = (code: string) => {
     setSelectedLangs(prev =>
@@ -46,8 +46,8 @@ export default function BecomeTeacherPage() {
     setIsSubmitting(true);
     try {
       const ratePerSecond = parseEther(ratePerMinute) / BigInt(60);
-      await registerTeacher({
-        functionName: "registerTeacher",
+      await registerTutor({
+        functionName: "registerTutor",
         args: [name, bio, selectedLangs.join(","), ratePerSecond],
       });
       router.push("/teachers");
@@ -74,13 +74,13 @@ export default function BecomeTeacherPage() {
             </div>
             <h1 className="text-3xl font-bold mb-3">Ogretmen Ol</h1>
             <p className="text-base-content/60 mb-8">
-              Dil bilgini paylasarak MON kazan. Ogrenciler sana saniye basina ode.
+              Dil bilgini paylasarak MON kazan. Ogrenciler onceden bakiye yukler ve seans sonunda payini cekersin.
             </p>
 
             <div className="space-y-4">
               {[
                 "Kendi ucretini belirle",
-                "Sadece dogrulanan konusma icin odeme alirsin",
+                "Seans basladiginda ucret snapshot alinir",
                 "Escrow ile odeme garantisi",
                 "Istedigin zaman aktif/pasif ol",
               ].map((item, i) => (

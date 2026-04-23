@@ -40,8 +40,8 @@ const LeaderboardPage: NextPage = () => {
   const [activeTab, setActiveTab] = useState<"teachers" | "activity">("teachers");
 
   const { data: teacherAddresses, isLoading } = useScaffoldReadContract({
-    contractName: "SpeakStream",
-    functionName: "getAllTeachers",
+    contractName: "StreamingTutorEscrow",
+    functionName: "getAllTutors",
   });
 
   // Platform stats
@@ -337,8 +337,8 @@ const LeaderboardPage: NextPage = () => {
 
 function TeacherRow({ address, rank }: { address: string; rank: number }) {
   const { data: teacher } = useScaffoldReadContract({
-    contractName: "SpeakStream",
-    functionName: "getTeacher",
+    contractName: "StreamingTutorEscrow",
+    functionName: "getTutor",
     args: [address],
   });
 
