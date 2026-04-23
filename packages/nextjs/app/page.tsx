@@ -1,21 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import type { NextPage } from "next";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { ArrowRight, Bot, Clock3, DollarSign, GraduationCap, Radio, Shield, Wallet } from "lucide-react";
+import type { NextPage } from "next";
 import { formatEther, parseEther } from "viem";
 import { useAccount } from "wagmi";
-import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  Bot,
-  Clock3,
-  DollarSign,
-  GraduationCap,
-  Radio,
-  Shield,
-  Wallet,
-} from "lucide-react";
 import {
   useScaffoldReadContract,
   useScaffoldWatchContractEvent,
@@ -33,6 +24,11 @@ const durationOptions = [
 
 const LOCAL_STORAGE_SESSION_KEY = "streaming-tutor-demo-session";
 const LOCAL_STORAGE_TEACHER_KEY = "streaming-tutor-demo-teacher";
+
+type SessionStartedArgs = {
+  student?: string;
+  sessionId?: bigint;
+};
 
 const Home: NextPage = () => {
   const { address: connectedAddress } = useAccount();
@@ -95,8 +91,7 @@ const Home: NextPage = () => {
     eventName: "SessionStarted",
     onLogs: logs => {
       for (const log of logs) {
-        const student = (log.args as Record<string, unknown>).student as string | undefined;
-        const sessionId = (log.args as Record<string, unknown>).sessionId as bigint | undefined;
+        const { student, sessionId } = log.args as unknown as SessionStartedArgs;
 
         if (student?.toLowerCase() === connectedAddress?.toLowerCase() && sessionId !== undefined) {
           setCurrentSessionId(sessionId);
@@ -165,7 +160,9 @@ const Home: NextPage = () => {
   const availableBalance = studentBalance || 0n;
   const hasEnoughBalance = availableBalance >= requiredDeposit;
   const humanTutorAddressList =
-    (humanTutorAddresses as string[] | undefined)?.filter(address => address.toLowerCase() !== AI_TUTOR_POOL_ADDRESS.toLowerCase()) || [];
+    (humanTutorAddresses as string[] | undefined)?.filter(
+      address => address.toLowerCase() !== AI_TUTOR_POOL_ADDRESS.toLowerCase(),
+    ) || [];
 
   const isActiveSession = currentSession?.status === 1;
   const elapsedSeconds = currentSession
@@ -180,13 +177,19 @@ const Home: NextPage = () => {
     : 0n;
   const spent = currentSession && liveSpent > currentSession.depositAmount ? currentSession.depositAmount : liveSpent;
   const remaining = currentSession ? currentSession.depositAmount - spent : 0n;
-  const refundable = currentSession ? currentSession.depositAmount - currentSession.earnedAmount - currentSession.refundedAmount : 0n;
+  const refundable = currentSession
+    ? currentSession.depositAmount - currentSession.earnedAmount - currentSession.refundedAmount
+    : 0n;
   const claimable = currentSession ? currentSession.earnedAmount - currentSession.claimedAmount : 0n;
   const remainingAmount = BigInt(remaining);
   const refundableAmount = BigInt(refundable);
   const claimableAmount = BigInt(claimable);
-  const isSessionStudent = Boolean(currentSession && connectedAddress?.toLowerCase() === currentSession.student.toLowerCase());
-  const isSessionTutor = Boolean(currentSession && connectedAddress?.toLowerCase() === currentSession.tutor.toLowerCase());
+  const isSessionStudent = Boolean(
+    currentSession && connectedAddress?.toLowerCase() === currentSession.student.toLowerCase(),
+  );
+  const isSessionTutor = Boolean(
+    currentSession && connectedAddress?.toLowerCase() === currentSession.tutor.toLowerCase(),
+  );
   const resolvedSessionTeacherAddress = currentSessionTeacherAddress || selectedTeacherAddress;
   const sessionTeacherIsAI = isAITeacher(resolvedSessionTeacherAddress);
   const sessionTeacherName = sessionTeacherIsAI
@@ -280,8 +283,14 @@ const Home: NextPage = () => {
     <div className="relative overflow-hidden px-4 py-10">
       <div className="fixed inset-0 pointer-events-none -z-10">
         <div className="orb orb-indigo absolute top-20 left-1/4 h-96 w-96 opacity-20" />
-        <div className="orb orb-purple absolute right-1/4 top-60 h-80 w-80 opacity-15" style={{ animationDelay: "2s" }} />
-        <div className="orb orb-blue absolute bottom-20 left-1/3 h-72 w-72 opacity-10" style={{ animationDelay: "4s" }} />
+        <div
+          className="orb orb-purple absolute right-1/4 top-60 h-80 w-80 opacity-15"
+          style={{ animationDelay: "2s" }}
+        />
+        <div
+          className="orb orb-blue absolute bottom-20 left-1/3 h-72 w-72 opacity-10"
+          style={{ animationDelay: "4s" }}
+        />
       </div>
 
       <section className="mx-auto max-w-6xl">
@@ -300,7 +309,11 @@ const Home: NextPage = () => {
         </motion.div>
 
         <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr,0.8fr]">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card bg-base-100 shadow-2xl">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="card bg-base-100 shadow-2xl"
+          >
             <div className="card-body gap-6">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="rounded-2xl border border-base-300 p-4">
@@ -315,7 +328,9 @@ const Home: NextPage = () => {
                     <DollarSign className="h-4 w-4" />
                     Gerekli deposit
                   </div>
-                  <div className="mt-2 text-3xl font-bold text-primary">{Number(formatEther(requiredDeposit)).toFixed(4)} MON</div>
+                  <div className="mt-2 text-3xl font-bold text-primary">
+                    {Number(formatEther(requiredDeposit)).toFixed(4)} MON
+                  </div>
                 </div>
                 <div className="rounded-2xl border border-base-300 p-4">
                   <div className="flex items-center gap-2 text-sm text-base-content/60">
@@ -392,7 +407,11 @@ const Home: NextPage = () => {
                     value={depositAmount}
                     onChange={event => setDepositAmount(event.target.value)}
                   />
-                  <button className="btn btn-primary" disabled={!connectedAddress || isDepositing} onClick={handleDeposit}>
+                  <button
+                    className="btn btn-primary"
+                    disabled={!connectedAddress || isDepositing}
+                    onClick={handleDeposit}
+                  >
                     {isDepositing ? <span className="loading loading-spinner" /> : "Deposit"}
                   </button>
                 </div>
@@ -410,7 +429,13 @@ const Home: NextPage = () => {
 
               <button
                 className="btn btn-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-none shadow-lg shadow-indigo-500/25"
-                disabled={!connectedAddress || !selectedTeacher || !hasEnoughBalance || Boolean(activeSessionId && activeSessionId > 0n) || isStarting}
+                disabled={
+                  !connectedAddress ||
+                  !selectedTeacher ||
+                  !hasEnoughBalance ||
+                  Boolean(activeSessionId && activeSessionId > 0n) ||
+                  isStarting
+                }
                 onClick={handleStartSession}
               >
                 {isStarting ? (
@@ -423,14 +448,21 @@ const Home: NextPage = () => {
                 )}
               </button>
 
-              {!connectedAddress && <div className="text-sm text-warning">Demo paneli kullanmak icin once cuzdanini bagla.</div>}
+              {!connectedAddress && (
+                <div className="text-sm text-warning">Demo paneli kullanmak icin once cuzdanini bagla.</div>
+              )}
               {connectedAddress && !hasEnoughBalance && (
                 <div className="text-sm text-warning">Secilen session icin yeterli escrow bakiyesi yok.</div>
               )}
             </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="card bg-base-100 shadow-2xl">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="card bg-base-100 shadow-2xl"
+          >
             <div className="card-body">
               <h2 className="card-title">Canli session durumu</h2>
 
@@ -446,7 +478,11 @@ const Home: NextPage = () => {
                   <div className="rounded-2xl border border-base-300 p-4">
                     <div className="text-sm text-base-content/50">Session #{currentSessionId?.toString()}</div>
                     <div className="mt-2 flex items-center gap-2">
-                      {sessionTeacherIsAI ? <Bot className="h-4 w-4 text-indigo-400" /> : <GraduationCap className="h-4 w-4" />}
+                      {sessionTeacherIsAI ? (
+                        <Bot className="h-4 w-4 text-indigo-400" />
+                      ) : (
+                        <GraduationCap className="h-4 w-4" />
+                      )}
                       <span className="font-semibold">{sessionTeacherName}</span>
                     </div>
                     <div className={`badge mt-3 ${isActiveSession ? "badge-success" : "badge-neutral"}`}>
@@ -455,9 +491,12 @@ const Home: NextPage = () => {
                   </div>
 
                   <div className="grid grid-cols-1 gap-3">
-                    <MetricCard label="Gecen sure" value={`${Math.floor(elapsedSeconds / 60)
-                      .toString()
-                      .padStart(2, "0")}:${(elapsedSeconds % 60).toString().padStart(2, "0")}`} />
+                    <MetricCard
+                      label="Gecen sure"
+                      value={`${Math.floor(elapsedSeconds / 60)
+                        .toString()
+                        .padStart(2, "0")}:${(elapsedSeconds % 60).toString().padStart(2, "0")}`}
+                    />
                     <MetricCard label="Harcanan MON" value={`${Number(formatEther(spent)).toFixed(4)} MON`} />
                     <MetricCard label="Kalan escrow" value={`${Number(formatEther(remainingAmount)).toFixed(4)} MON`} />
                   </div>
@@ -465,11 +504,15 @@ const Home: NextPage = () => {
                   <div className="rounded-2xl border border-base-300 p-4 text-sm text-base-content/60">
                     <div className="flex justify-between">
                       <span>Tutor claimable</span>
-                      <span className="font-semibold text-primary">{Number(formatEther(claimableAmount)).toFixed(4)} MON</span>
+                      <span className="font-semibold text-primary">
+                        {Number(formatEther(claimableAmount)).toFixed(4)} MON
+                      </span>
                     </div>
                     <div className="mt-2 flex justify-between">
                       <span>Student refundable</span>
-                      <span className="font-semibold text-primary">{Number(formatEther(refundableAmount)).toFixed(4)} MON</span>
+                      <span className="font-semibold text-primary">
+                        {Number(formatEther(refundableAmount)).toFixed(4)} MON
+                      </span>
                     </div>
                   </div>
 
@@ -486,7 +529,11 @@ const Home: NextPage = () => {
                   )}
 
                   {!isActiveSession && isSessionStudent && (
-                    <button className="btn btn-outline" disabled={refundable <= 0n || isRefunding} onClick={handleRefund}>
+                    <button
+                      className="btn btn-outline"
+                      disabled={refundable <= 0n || isRefunding}
+                      onClick={handleRefund}
+                    >
                       {isRefunding ? <span className="loading loading-spinner" /> : "Kalan Escrow Iadesi"}
                     </button>
                   )}
@@ -515,7 +562,8 @@ const Home: NextPage = () => {
             },
             {
               title: "Order-independent settlement",
-              description: "Tutor claim once, student refund once. Hangi taraf once settlement yaparsa yapsin toplam dagilim ayni kalir.",
+              description:
+                "Tutor claim once, student refund once. Hangi taraf once settlement yaparsa yapsin toplam dagilim ayni kalir.",
             },
           ].map(item => (
             <div key={item.title} className="card bg-base-100 shadow-xl">

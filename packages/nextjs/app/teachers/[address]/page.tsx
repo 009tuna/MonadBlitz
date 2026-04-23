@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { ArrowRight, Bot, Clock, Globe, Shield, Sparkles, Wallet } from "lucide-react";
 import { formatEther, parseEther } from "viem";
 import { useAccount } from "wagmi";
 import {
@@ -10,8 +12,6 @@ import {
   useScaffoldWriteContract,
 } from "~~/hooks/scaffold-eth";
 import { getAITeacher, getContractAddressForTeacher, isAITeacher } from "~~/lib/teacherUtils";
-import { ArrowRight, Bot, Clock, Globe, Shield, Sparkles, Wallet } from "lucide-react";
-import { motion } from "framer-motion";
 
 const languageNames: Record<string, string> = {
   en: "English",
@@ -31,6 +31,11 @@ const durationOptions = [
   { label: "30 dk", seconds: 1800 },
   { label: "60 dk", seconds: 3600 },
 ];
+
+type SessionStartedArgs = {
+  student?: string;
+  sessionId?: bigint;
+};
 
 export default function TeacherDetailPage() {
   const params = useParams();
@@ -72,8 +77,7 @@ export default function TeacherDetailPage() {
     eventName: "SessionStarted",
     onLogs: logs => {
       for (const log of logs) {
-        const student = (log.args as Record<string, unknown>).student as string | undefined;
-        const sessionId = (log.args as Record<string, unknown>).sessionId as bigint | undefined;
+        const { student, sessionId } = log.args as unknown as SessionStartedArgs;
 
         if (student?.toLowerCase() === connectedAddress?.toLowerCase() && sessionId !== undefined) {
           const suffix = isAI ? `?ai=${encodeURIComponent(teacherAddress)}` : "";
@@ -104,7 +108,7 @@ export default function TeacherDetailPage() {
     );
   }
 
-  if (!teacher || teacherAddress === contractTeacherAddress && teacher.name.length === 0) {
+  if (!teacher || (teacherAddress === contractTeacherAddress && teacher.name.length === 0)) {
     return (
       <div className="text-center py-20">
         <p className="text-xl text-base-content/50">Ogretmen bulunamadi</p>
@@ -117,7 +121,10 @@ export default function TeacherDetailPage() {
   const availableBalance = studentBalance || 0n;
   const hasEnoughBalance = availableBalance >= requiredDeposit;
   const hasActiveSession = Boolean(activeSessionId && activeSessionId > 0n);
-  const langList = teacher.languages.split(",").map((lang: string) => lang.trim()).filter(Boolean);
+  const langList = teacher.languages
+    .split(",")
+    .map((lang: string) => lang.trim())
+    .filter(Boolean);
 
   const handleFund = async () => {
     if (!connectedAddress || !topUpAmount) return;
@@ -155,16 +162,10 @@ export default function TeacherDetailPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="lg:col-span-2"
-        >
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="lg:col-span-2">
           <div
             className={`card shadow-xl ${
-              isAI
-                ? "bg-gradient-to-br from-indigo-950/80 to-purple-950/80 border border-indigo-500/20"
-                : "bg-base-100"
+              isAI ? "bg-gradient-to-br from-indigo-950/80 to-purple-950/80 border border-indigo-500/20" : "bg-base-100"
             }`}
           >
             <div className="card-body items-center text-center">
@@ -190,7 +191,9 @@ export default function TeacherDetailPage() {
               <h1 className="text-2xl font-bold">{teacher.name}</h1>
 
               <div className="flex items-center gap-1 mt-1">
-                <div className={`w-2 h-2 rounded-full ${teacher.active ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+                <div
+                  className={`w-2 h-2 rounded-full ${teacher.active ? "bg-green-500 animate-pulse" : "bg-red-500"}`}
+                />
                 <span className={`text-sm ${teacher.active ? "text-green-500" : "text-error"}`}>
                   {teacher.active ? (isAI ? "Her zaman aktif" : "Aktif") : "Pasif"}
                 </span>
@@ -210,7 +213,9 @@ export default function TeacherDetailPage() {
               <div className="grid grid-cols-2 gap-3 mt-4 w-full">
                 <div className="bg-base-200/50 rounded-xl p-3 text-center">
                   <div className="text-xs text-base-content/50">Ucret</div>
-                  <div className="font-bold text-primary text-sm">{Number(formatEther(ratePerHour)).toFixed(4)} MON/saat</div>
+                  <div className="font-bold text-primary text-sm">
+                    {Number(formatEther(ratePerHour)).toFixed(4)} MON/saat
+                  </div>
                 </div>
                 <div className="bg-base-200/50 rounded-xl p-3 text-center">
                   <div className="text-xs text-base-content/50">Toplam Kazanc</div>
@@ -234,7 +239,8 @@ export default function TeacherDetailPage() {
                 Seansini Planla
               </h2>
               <p className="text-sm text-base-content/50 mb-6">
-                Bu v1 akisinda bakiye once kontrata yatirilir, seans bitince egitmen payini ceker ve kalan bakiye ogrenciye iade edilir.
+                Bu v1 akisinda bakiye once kontrata yatirilir, seans bitince egitmen payini ceker ve kalan bakiye
+                ogrenciye iade edilir.
               </p>
 
               <div className="mb-6">
@@ -267,7 +273,9 @@ export default function TeacherDetailPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-base-content/60 text-sm">Gerekli escrow</span>
-                  <span className="font-semibold text-primary">{Number(formatEther(requiredDeposit)).toFixed(4)} MON</span>
+                  <span className="font-semibold text-primary">
+                    {Number(formatEther(requiredDeposit)).toFixed(4)} MON
+                  </span>
                 </div>
                 <div className="divider my-1" />
                 <div className="flex justify-between items-center">
@@ -291,11 +299,7 @@ export default function TeacherDetailPage() {
                       value={topUpAmount}
                       onChange={event => setTopUpAmount(event.target.value)}
                     />
-                    <button
-                      className="btn btn-primary"
-                      onClick={handleFund}
-                      disabled={!connectedAddress || isFunding}
-                    >
+                    <button className="btn btn-primary" onClick={handleFund} disabled={!connectedAddress || isFunding}>
                       {isFunding ? <span className="loading loading-spinner" /> : "Bakiye Yukle"}
                     </button>
                   </div>
@@ -309,8 +313,8 @@ export default function TeacherDetailPage() {
                 <div className="flex items-start gap-3">
                   <Shield className="h-5 w-5 text-green-500 mt-0.5" />
                   <div className="text-sm text-base-content/70">
-                    Para seans basinda dogrudan egitmene gitmez. Seans durduruldugunda kazanilan tutar hesaplanir; egitmen
-                    `claim`, ogrenci ise `refundUnused` ile kendi payini ceker.
+                    Para seans basinda dogrudan egitmene gitmez. Seans durduruldugunda kazanilan tutar hesaplanir;
+                    egitmen `claim`, ogrenci ise `refundUnused` ile kendi payini ceker.
                   </div>
                 </div>
               </div>
@@ -338,9 +342,7 @@ export default function TeacherDetailPage() {
               )}
 
               {!connectedAddress && (
-                <p className="text-center text-sm text-warning mt-2">
-                  Seans baslatmak icin once cuzdanini bagla.
-                </p>
+                <p className="text-center text-sm text-warning mt-2">Seans baslatmak icin once cuzdanini bagla.</p>
               )}
             </div>
           </div>
@@ -349,4 +351,3 @@ export default function TeacherDetailPage() {
     </div>
   );
 }
-

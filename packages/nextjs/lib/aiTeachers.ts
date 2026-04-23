@@ -23,7 +23,7 @@ export interface AITeacher {
  * Monad deploy sonrasi bu adresi env ile override edin.
  */
 export const AI_TUTOR_POOL_ADDRESS =
-  process.env.NEXT_PUBLIC_AI_TUTOR_POOL_ADDRESS || "0x1234567890AbcdEF1234567890aBcdef12345678";
+  process.env.NEXT_PUBLIC_AI_TUTOR_POOL_ADDRESS || "0x706E8a839f0708860cf47A7625580C316ee8D7F3";
 
 export const AI_TEACHERS: AITeacher[] = [
   {
