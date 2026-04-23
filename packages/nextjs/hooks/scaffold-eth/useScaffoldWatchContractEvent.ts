@@ -32,7 +32,7 @@ export const useScaffoldWatchContractEvent = <
   });
   useDemoEscrowWatchContractEvent({
     eventName: eventName as string,
-    onLogs: onLogs as (logs: { args: Record<string, unknown>; eventName: string }[]) => void,
+    onLogs: onLogs as unknown as (logs: { args: Record<string, unknown>; eventName: string }[]) => void,
   });
 
   return useWatchContractEvent({
