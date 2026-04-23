@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Bot, DollarSign, Globe, Sparkles } from "lucide-react";
 import { formatEther } from "viem";
@@ -71,7 +72,7 @@ export const TeacherCard = ({
         <div className="flex items-center gap-3 mb-3">
           {avatar ? (
             <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-500 flex-shrink-0">
-              <img src={avatar} alt={name} className="w-full h-full object-cover" />
+              <Image src={avatar} alt={name} width={48} height={48} className="w-full h-full object-cover" unoptimized />
             </div>
           ) : (
             <div className="avatar placeholder flex-shrink-0">

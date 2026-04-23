@@ -186,7 +186,10 @@ export const useDemoEscrowReadContract = ({
   args?: readonly unknown[];
 }) => {
   const [version, setVersion] = useState(0);
-  const data = useMemo(() => getReadValue(functionName, args), [functionName, args, version]);
+  const data = useMemo(() => {
+    // version is used to trigger re-read from localStorage
+    return getReadValue(functionName, args);
+  }, [functionName, args, version]);
 
   useEffect(() => {
     const onChange = () => setVersion(current => current + 1);
