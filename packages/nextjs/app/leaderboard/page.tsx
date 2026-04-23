@@ -1,21 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { NextPage } from "next";
-import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
-import { Trophy, TrendingUp, Clock, Users, Bot, Crown, Medal, Award } from "lucide-react";
 import { motion } from "framer-motion";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from "recharts";
+import { Award, Bot, Clock, Crown, Medal, TrendingUp, Trophy, Users } from "lucide-react";
+import type { NextPage } from "next";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 
 // Demo data — gercek kontrat verisi olmasa bile gorsellestirme icin
 const demoWeeklyData = [
@@ -53,11 +43,7 @@ const LeaderboardPage: NextPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-10"
-      >
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
         <h1 className="text-4xl md:text-5xl font-bold mb-3">Leaderboard</h1>
         <p className="text-base-content/60 text-lg">Platform istatistikleri ve en iyi ogretmenler</p>
       </motion.div>
@@ -70,10 +56,30 @@ const LeaderboardPage: NextPage = () => {
         className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10"
       >
         {[
-          { icon: <Users className="h-5 w-5" />, label: "Toplam Seans", value: totalSessions.toString(), color: "from-indigo-500 to-blue-500" },
-          { icon: <TrendingUp className="h-5 w-5" />, label: "Toplam Hacim", value: `${totalVolume} MON`, color: "from-purple-500 to-pink-500" },
-          { icon: <Clock className="h-5 w-5" />, label: "Ort. Sure", value: avgDuration, color: "from-green-500 to-emerald-500" },
-          { icon: <Trophy className="h-5 w-5" />, label: "Aktif Ogretmen", value: activeTeachers.toString(), color: "from-orange-500 to-amber-500" },
+          {
+            icon: <Users className="h-5 w-5" />,
+            label: "Toplam Seans",
+            value: totalSessions.toString(),
+            color: "from-indigo-500 to-blue-500",
+          },
+          {
+            icon: <TrendingUp className="h-5 w-5" />,
+            label: "Toplam Hacim",
+            value: `${totalVolume} MON`,
+            color: "from-purple-500 to-pink-500",
+          },
+          {
+            icon: <Clock className="h-5 w-5" />,
+            label: "Ort. Sure",
+            value: avgDuration,
+            color: "from-green-500 to-emerald-500",
+          },
+          {
+            icon: <Trophy className="h-5 w-5" />,
+            label: "Aktif Ogretmen",
+            value: activeTeachers.toString(),
+            color: "from-orange-500 to-amber-500",
+          },
         ].map((stat, i) => (
           <motion.div
             key={i}
@@ -83,7 +89,9 @@ const LeaderboardPage: NextPage = () => {
             className="card bg-base-100 shadow-xl"
           >
             <div className="card-body p-4">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-white mb-2`}>
+              <div
+                className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-white mb-2`}
+              >
                 {stat.icon}
               </div>
               <div className="text-2xl font-bold">{stat.value}</div>
@@ -155,13 +163,7 @@ const LeaderboardPage: NextPage = () => {
                       <stop offset="100%" stopColor="#a855f7" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <Area
-                    type="monotone"
-                    dataKey="volume"
-                    stroke="#a855f7"
-                    strokeWidth={2}
-                    fill="url(#areaGradient)"
-                  />
+                  <Area type="monotone" dataKey="volume" stroke="#a855f7" strokeWidth={2} fill="url(#areaGradient)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -196,11 +198,7 @@ const LeaderboardPage: NextPage = () => {
       </div>
 
       {/* Content */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
         {activeTab === "teachers" ? (
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body p-0">
@@ -239,9 +237,16 @@ const LeaderboardPage: NextPage = () => {
                             </div>
                           </div>
                         </td>
-                        <td><span className="badge badge-primary badge-sm">AI</span></td>
+                        <td>
+                          <span className="badge badge-primary badge-sm">AI</span>
+                        </td>
                         <td>EN, TR</td>
-                        <td><div className="flex items-center gap-1"><div className="w-2 h-2 bg-green-500 rounded-full" /><span className="text-xs text-green-500">Active</span></div></td>
+                        <td>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full" />
+                            <span className="text-xs text-green-500">Active</span>
+                          </div>
+                        </td>
                       </tr>
                       <tr className="hover:bg-indigo-500/5">
                         <td>
@@ -260,9 +265,16 @@ const LeaderboardPage: NextPage = () => {
                             </div>
                           </div>
                         </td>
-                        <td><span className="badge badge-primary badge-sm">AI</span></td>
+                        <td>
+                          <span className="badge badge-primary badge-sm">AI</span>
+                        </td>
                         <td>EN, TR</td>
-                        <td><div className="flex items-center gap-1"><div className="w-2 h-2 bg-green-500 rounded-full" /><span className="text-xs text-green-500">Active</span></div></td>
+                        <td>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full" />
+                            <span className="text-xs text-green-500">Active</span>
+                          </div>
+                        </td>
                       </tr>
                       <tr className="hover:bg-indigo-500/5">
                         <td>
@@ -281,14 +293,22 @@ const LeaderboardPage: NextPage = () => {
                             </div>
                           </div>
                         </td>
-                        <td><span className="badge badge-primary badge-sm">AI</span></td>
+                        <td>
+                          <span className="badge badge-primary badge-sm">AI</span>
+                        </td>
                         <td>ES, TR, EN</td>
-                        <td><div className="flex items-center gap-1"><div className="w-2 h-2 bg-green-500 rounded-full" /><span className="text-xs text-green-500">Active</span></div></td>
+                        <td>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full" />
+                            <span className="text-xs text-green-500">Active</span>
+                          </div>
+                        </td>
                       </tr>
                       {/* Contract teachers */}
-                      {teacherAddresses && (teacherAddresses as string[]).map((addr, i) => (
-                        <TeacherRow key={addr} address={addr} rank={i + 4} />
-                      ))}
+                      {teacherAddresses &&
+                        (teacherAddresses as string[]).map((addr, i) => (
+                          <TeacherRow key={addr} address={addr} rank={i + 4} />
+                        ))}
                     </tbody>
                   </table>
                 </div>
@@ -319,9 +339,13 @@ const LeaderboardPage: NextPage = () => {
                             <span className="text-sm">{s.teacher}</span>
                           </div>
                         </td>
-                        <td>{Math.floor(s.duration / 60)}:{(s.duration % 60).toString().padStart(2, "0")}</td>
+                        <td>
+                          {Math.floor(s.duration / 60)}:{(s.duration % 60).toString().padStart(2, "0")}
+                        </td>
                         <td className="text-primary font-semibold">{s.cost} MON</td>
-                        <td><span className="badge badge-outline badge-sm">{s.lang.toUpperCase()}</span></td>
+                        <td>
+                          <span className="badge badge-outline badge-sm">{s.lang.toUpperCase()}</span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -366,7 +390,9 @@ function TeacherRow({ address, rank }: { address: string; rank: number }) {
           </div>
         </div>
       </td>
-      <td><span className="badge badge-outline badge-sm">Human</span></td>
+      <td>
+        <span className="badge badge-outline badge-sm">Human</span>
+      </td>
       <td>{teacher.languages.toUpperCase()}</td>
       <td>
         <div className="flex items-center gap-1">

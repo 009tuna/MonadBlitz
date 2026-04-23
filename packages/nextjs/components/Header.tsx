@@ -3,7 +3,7 @@
 import React, { useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, MessageCircle, Users, GraduationCap, Trophy, Bug, Radio } from "lucide-react";
+import { Bug, GraduationCap, Menu, MessageCircle, Radio, Trophy, Users } from "lucide-react";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
 
@@ -106,7 +106,9 @@ export const Header = () => {
             </div>
             <div className="flex flex-col">
               <span className="font-bold leading-tight text-lg tracking-tight">SpeakStream</span>
-              <span className="text-[10px] text-base-content/40 font-medium tracking-wider uppercase">Pay per second you speak</span>
+              <span className="text-[10px] text-base-content/40 font-medium tracking-wider uppercase">
+                Pay per second you speak
+              </span>
             </div>
           </div>
         </Link>

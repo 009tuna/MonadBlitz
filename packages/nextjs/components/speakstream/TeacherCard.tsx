@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { Bot, DollarSign, Globe, Sparkles } from "lucide-react";
 import { formatEther } from "viem";
-import { Bot, Globe, DollarSign, Sparkles } from "lucide-react";
 
 interface TeacherCardProps {
   address: string;
@@ -45,17 +45,16 @@ export const TeacherCard = ({
   const ratePerHour = ratePerSecond * BigInt(3600);
   const ratePerHourStr = Number(formatEther(ratePerHour)).toFixed(4);
 
-  const langList = languages.split(",").map(l => l.trim()).filter(Boolean);
+  const langList = languages
+    .split(",")
+    .map(l => l.trim())
+    .filter(Boolean);
 
   return (
     <div
       className={`card shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] ${
         !active ? "opacity-50" : ""
-      } ${
-        isAI
-          ? "bg-gradient-to-br from-indigo-950/80 to-purple-950/80 border border-indigo-500/20"
-          : "bg-base-100"
-      }`}
+      } ${isAI ? "bg-gradient-to-br from-indigo-950/80 to-purple-950/80 border border-indigo-500/20" : "bg-base-100"}`}
     >
       <div className="card-body">
         {/* AI Badge */}
@@ -87,9 +86,7 @@ export const TeacherCard = ({
               {active ? (
                 <>
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-xs text-green-500">
-                    {isAI ? "Her zaman aktif" : "Active"}
-                  </span>
+                  <span className="text-xs text-green-500">{isAI ? "Her zaman aktif" : "Active"}</span>
                 </>
               ) : (
                 <span className="text-xs text-error">Inactive</span>
@@ -105,10 +102,7 @@ export const TeacherCard = ({
         <div className="flex items-center gap-1 flex-wrap mb-3">
           <Globe className="h-4 w-4 text-base-content/50 flex-shrink-0" />
           {langList.map(lang => (
-            <span
-              key={lang}
-              className={`badge badge-sm ${isAI ? "badge-primary badge-outline" : "badge-outline"}`}
-            >
+            <span key={lang} className={`badge badge-sm ${isAI ? "badge-primary badge-outline" : "badge-outline"}`}>
               {languageNames[lang] || lang}
             </span>
           ))}

@@ -2,8 +2,7 @@
  * Ogretmen helper fonksiyonlari.
  * Kontrat + AI ogretmenleri birlestiren utility'ler.
  */
-
-import { AI_TEACHERS, AI_TUTOR_POOL_ADDRESS, isAITeacher, getAITeacher } from "./aiTeachers";
+import { AI_TEACHERS, AI_TUTOR_POOL_ADDRESS, getAITeacher, isAITeacher } from "./aiTeachers";
 import type { AITeacher } from "./aiTeachers";
 
 export interface UnifiedTeacher {

@@ -8,7 +8,14 @@ type ChatTurn = {
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
-  const { teacherName, teacherBio, targetLanguage, persona, message, history = [] } = body as {
+  const {
+    teacherName,
+    teacherBio,
+    targetLanguage,
+    persona,
+    message,
+    history = [],
+  } = body as {
     teacherName?: string;
     teacherBio?: string;
     targetLanguage?: string;
@@ -51,7 +58,7 @@ ${message?.trim() || "Please greet me and start the conversation."}
 Reply as the tutor only.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.0-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: {
         temperature: 0.7,

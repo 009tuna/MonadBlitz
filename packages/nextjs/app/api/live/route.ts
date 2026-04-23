@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 
 const GEMINI_LIVE_MODEL = "models/gemini-3.1-flash-live-preview";
 
@@ -15,10 +15,7 @@ export async function POST(request: NextRequest) {
     const liveModel = process.env.GEMINI_LIVE_MODEL || DEFAULT_GEMINI_LIVE_MODEL;
 
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "GEMINI_API_KEY bulunamadi" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "GEMINI_API_KEY bulunamadi" }, { status: 500 });
     }
 
     const body = await request.json();
@@ -61,7 +58,8 @@ Start by warmly greeting them and asking what they'd like to talk about today.`;
                 functionDeclarations: [
                   {
                     name: "stopSession",
-                    description: "Stops the current tutoring session. Call this when the student wants to end the lesson or says goodbye.",
+                    description:
+                      "Stops the current tutoring session. Call this when the student wants to end the lesson or says goodbye.",
                     parameters: {
                       type: "OBJECT",
                       properties: {},
@@ -78,9 +76,6 @@ Start by warmly greeting them and asking what they'd like to talk about today.`;
     return NextResponse.json({ token: token.name, model: liveModel });
   } catch (error: any) {
     console.error("Live API token hatasi:", error);
-    return NextResponse.json(
-      { error: error.message || "Token uretilemedi" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || "Token uretilemedi" }, { status: 500 });
   }
 }

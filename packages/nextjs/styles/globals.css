@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
@@ -6,7 +6,7 @@
 @theme {
   --shadow-center: 0 0 12px -2px rgb(0 0 0 / 0.05);
   --animate-pulse-fast: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 @plugin "daisyui" {
@@ -87,7 +87,7 @@
 
   body {
     min-height: 100vh;
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   }
 
   h1,
@@ -127,8 +127,15 @@
 
 /* Flow animation for payment stream */
 @keyframes flow {
-  0%, 100% { opacity: 0.4; transform: scaleX(0.8); }
-  50% { opacity: 1; transform: scaleX(1); }
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scaleX(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
 }
 
 .animate-flow {
@@ -137,8 +144,14 @@
 
 /* Counter animation */
 @keyframes counter-up {
-  from { transform: translateY(10px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .animate-counter {
@@ -147,8 +160,13 @@
 
 /* Pulse green for active indicators */
 @keyframes pulse-green {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-  50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
 }
 
 .animate-pulse-green {
@@ -166,8 +184,13 @@
 }
 
 @keyframes gradient-shift {
-  0%, 100% { background-position: 0% center; }
-  50% { background-position: 100% center; }
+  0%,
+  100% {
+    background-position: 0% center;
+  }
+  50% {
+    background-position: 100% center;
+  }
 }
 
 /* Glow effect for cards */
@@ -177,7 +200,7 @@
 }
 
 .glow-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -50%;
   left: -50%;
@@ -190,8 +213,13 @@
 
 /* Floating animation */
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .animate-float {
@@ -200,8 +228,12 @@
 
 /* Shimmer effect for loading states */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .animate-shimmer {
@@ -212,7 +244,8 @@
 
 /* Orb glow for hero section */
 @keyframes orb-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.3;
     transform: scale(1);
   }
@@ -243,8 +276,13 @@
 
 /* Audio waveform bars */
 @keyframes wave-bar {
-  0%, 100% { height: 8px; }
-  50% { height: 24px; }
+  0%,
+  100% {
+    height: 8px;
+  }
+  50% {
+    height: 24px;
+  }
 }
 
 .wave-bar {
@@ -256,8 +294,15 @@
 
 /* Typing dots */
 @keyframes typing-dot {
-  0%, 100% { opacity: 0.3; transform: translateY(0); }
-  50% { opacity: 1; transform: translateY(-4px); }
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
 }
 
 .typing-dot {
@@ -266,8 +311,12 @@
 
 /* Stream flow line */
 @keyframes stream-flow {
-  0% { stroke-dashoffset: 100; }
-  100% { stroke-dashoffset: 0; }
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
 }
 
 .stream-line {

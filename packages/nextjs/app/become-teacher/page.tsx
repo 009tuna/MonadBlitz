@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { ArrowRight, CheckCircle, DollarSign, FileText, Globe, GraduationCap, Sparkles } from "lucide-react";
 import { parseEther } from "viem";
 import { useAccount } from "wagmi";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
-import { GraduationCap, Globe, DollarSign, FileText, ArrowRight, CheckCircle, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
 
 const languageOptions = [
   { code: "en", name: "English" },
@@ -36,9 +36,7 @@ export default function BecomeTeacherPage() {
   const { writeContractAsync: registerTutor } = useScaffoldWriteContract("StreamingTutorEscrow");
 
   const toggleLang = (code: string) => {
-    setSelectedLangs(prev =>
-      prev.includes(code) ? prev.filter(l => l !== code) : [...prev, code]
-    );
+    setSelectedLangs(prev => (prev.includes(code) ? prev.filter(l => l !== code) : [...prev, code]));
   };
 
   const handleSubmit = async () => {
@@ -63,11 +61,7 @@ export default function BecomeTeacherPage() {
     <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Sol: Bilgi */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="lg:col-span-2"
-        >
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="lg:col-span-2">
           <div className="sticky top-24">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white mb-4">
               <GraduationCap className="h-7 w-7" />
@@ -206,11 +200,7 @@ export default function BecomeTeacherPage() {
                 )}
               </button>
 
-              {!address && (
-                <p className="text-center text-sm text-warning mt-2">
-                  Kayit icin cuzdaninizi baglayin
-                </p>
-              )}
+              {!address && <p className="text-center text-sm text-warning mt-2">Kayit icin cuzdaninizi baglayin</p>}
             </div>
           </div>
         </motion.div>

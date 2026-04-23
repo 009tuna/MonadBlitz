@@ -1,12 +1,7 @@
 "use client";
 
 import { formatEther } from "viem";
-import {
-  CurrencyDollarIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
-  LockClosedIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowDownIcon, ArrowUpIcon, CurrencyDollarIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 
 interface PaymentFlowProps {
   totalDeposited: bigint;
@@ -49,12 +44,8 @@ export const PaymentFlow = ({
 
       {/* Timer */}
       <div className="text-center mb-4">
-        <div className="text-4xl font-mono font-bold text-primary animate-counter">
-          {formatTime(elapsedSeconds)}
-        </div>
-        <div className="text-xs text-base-content/50">
-          / {formatTime(maxDuration)}
-        </div>
+        <div className="text-4xl font-mono font-bold text-primary animate-counter">{formatTime(elapsedSeconds)}</div>
+        <div className="text-xs text-base-content/50">/ {formatTime(maxDuration)}</div>
       </div>
 
       {/* Progress bar */}
@@ -73,9 +64,7 @@ export const PaymentFlow = ({
             <LockClosedIcon className="h-5 w-5 text-base-content/50" />
             <span className="text-sm">Kilitli Toplam</span>
           </div>
-          <span className="font-mono font-semibold">
-            {Number(formatEther(totalDeposited)).toFixed(6)} MON
-          </span>
+          <span className="font-mono font-semibold">{Number(formatEther(totalDeposited)).toFixed(6)} MON</span>
         </div>
 
         {/* Ogretmene giden */}
@@ -106,9 +95,7 @@ export const PaymentFlow = ({
             <CurrencyDollarIcon className="h-5 w-5 text-primary" />
             <span className="text-sm font-semibold">Kalan</span>
           </div>
-          <span className="font-mono font-semibold text-primary">
-            {Number(formatEther(remaining)).toFixed(6)} MON
-          </span>
+          <span className="font-mono font-semibold text-primary">{Number(formatEther(remaining)).toFixed(6)} MON</span>
         </div>
       </div>
 
@@ -127,16 +114,8 @@ export const PaymentFlow = ({
 
       {/* Seansi bitir butonu */}
       {isActive && (
-        <button
-          className="btn btn-error btn-block mt-auto"
-          onClick={onEndSession}
-          disabled={isEnding}
-        >
-          {isEnding ? (
-            <span className="loading loading-spinner" />
-          ) : (
-            "Seansi Bitir"
-          )}
+        <button className="btn btn-error btn-block mt-auto" onClick={onEndSession} disabled={isEnding}>
+          {isEnding ? <span className="loading loading-spinner" /> : "Seansi Bitir"}
         </button>
       )}
 

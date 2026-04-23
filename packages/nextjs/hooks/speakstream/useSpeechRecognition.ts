@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // Web Speech API tipi (Chrome/Chromium icin)
 interface SpeechRecognitionEvent {
@@ -73,93 +73,96 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
     setIsListening(false);
   }, []);
 
-  const start = useCallback((lang: string = "en-US") => {
-    setError(null);
-
-    // Browser destegi kontrol
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setError("Tarayiciniz Web Speech API desteklemiyor. Lutfen Chrome/Chromium kullanin.");
-      return;
-    }
-
-    // Onceki instance'i temizle
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = lang;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => {
-      setIsListening(true);
+  const start = useCallback(
+    (lang: string = "en-US") => {
       setError(null);
-    };
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let interim = "";
-      let final = "";
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) {
-          final += result[0].transcript + " ";
-
-          // Yeni final chunk ekle
-          const newChunk: TranscriptChunk = {
-            text: result[0].transcript.trim(),
-            timestamp: Date.now(),
-            isFinal: true,
-          };
-          chunksRef.current.push(newChunk);
-          setChunks(prev => [...prev, newChunk]);
-        } else {
-          interim += result[0].transcript;
-        }
+      // Browser destegi kontrol
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        setError("Tarayiciniz Web Speech API desteklemiyor. Lutfen Chrome/Chromium kullanin.");
+        return;
       }
 
-      if (final) {
-        setTranscript(prev => prev + final);
-      }
-      setInterimTranscript(interim);
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error("Speech recognition error:", event.error);
-      if (event.error === "not-allowed") {
-        setError("Mikrofon izni reddedildi. Lutfen tarayici ayarlarindan mikrofon iznini verin.");
-        stop();
-      } else if (event.error === "no-speech") {
-        // Sessizlik — normal, yeniden baslat
-      } else {
-        setError(`Ses tanima hatasi: ${event.error}`);
-      }
-    };
-
-    recognition.onend = () => {
-      // Otomatik yeniden baslat (Web Speech API bazen durur)
+      // Onceki instance'i temizle
       if (recognitionRef.current) {
-        restartTimeoutRef.current = setTimeout(() => {
-          try {
-            recognition.start();
-          } catch {
-            // Zaten calisiyor olabilir
-          }
-        }, 100);
+        recognitionRef.current.stop();
       }
-    };
 
-    recognitionRef.current = recognition;
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = lang;
+      recognition.maxAlternatives = 1;
 
-    try {
-      recognition.start();
-    } catch {
-      setError("Ses tanima baslatIlamadi.");
-    }
-  }, [stop]);
+      recognition.onstart = () => {
+        setIsListening(true);
+        setError(null);
+      };
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        let interim = "";
+        let final = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          if (result.isFinal) {
+            final += result[0].transcript + " ";
+
+            // Yeni final chunk ekle
+            const newChunk: TranscriptChunk = {
+              text: result[0].transcript.trim(),
+              timestamp: Date.now(),
+              isFinal: true,
+            };
+            chunksRef.current.push(newChunk);
+            setChunks(prev => [...prev, newChunk]);
+          } else {
+            interim += result[0].transcript;
+          }
+        }
+
+        if (final) {
+          setTranscript(prev => prev + final);
+        }
+        setInterimTranscript(interim);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        if (event.error === "not-allowed") {
+          setError("Mikrofon izni reddedildi. Lutfen tarayici ayarlarindan mikrofon iznini verin.");
+          stop();
+        } else if (event.error === "no-speech") {
+          // Sessizlik — normal, yeniden baslat
+        } else {
+          setError(`Ses tanima hatasi: ${event.error}`);
+        }
+      };
+
+      recognition.onend = () => {
+        // Otomatik yeniden baslat (Web Speech API bazen durur)
+        if (recognitionRef.current) {
+          restartTimeoutRef.current = setTimeout(() => {
+            try {
+              recognition.start();
+            } catch {
+              // Zaten calisiyor olabilir
+            }
+          }, 100);
+        }
+      };
+
+      recognitionRef.current = recognition;
+
+      try {
+        recognition.start();
+      } catch {
+        setError("Ses tanima baslatIlamadi.");
+      }
+    },
+    [stop],
+  );
 
   // Cleanup
   useEffect(() => {
