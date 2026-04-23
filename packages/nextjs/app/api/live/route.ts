@@ -50,6 +50,9 @@ Start by warmly greeting them and asking what they'd like to talk about today.`;
           model: GEMINI_LIVE_MODEL,
           config: {
             responseModalities: ["audio"],
+            speechConfig: {
+              voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoide" } },
+            },
             systemInstruction: {
               parts: [{ text: systemInstruction }],
             },

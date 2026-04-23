@@ -105,6 +105,7 @@ export function useGeminiLive(): UseGeminiLiveReturn {
     if (text) {
       pushMessage({ role: "student", text, timestamp: Date.now() });
       studentBufferRef.current = "";
+      setStudentTranscript("");
     }
   }, [pushMessage]);
 
@@ -114,6 +115,7 @@ export function useGeminiLive(): UseGeminiLiveReturn {
     if (text) {
       pushMessage({ role: "ai", text, timestamp: Date.now() });
       aiBufferRef.current = "";
+      setAiTranscript("");
     }
   }, [pushMessage]);
 
@@ -289,7 +291,15 @@ export function useGeminiLive(): UseGeminiLiveReturn {
           },
         },
         config: {
-          responseModalities: ["audio"],
+          generationConfig: {
+            responseModalities: ["audio"],
+          },
+          transcription: {
+            enabled: true,
+          },
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoide" } },
+          },
         },
       });
 

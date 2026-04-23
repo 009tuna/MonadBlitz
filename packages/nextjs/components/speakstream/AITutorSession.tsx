@@ -174,8 +174,7 @@ export const AITutorSession = ({
           ))}
         </AnimatePresence>
 
-        {/* AI typing indicator */}
-        {live.aiSpeaking && (
+        {live.aiSpeaking && live.aiTranscript && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -184,12 +183,11 @@ export const AITutorSession = ({
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
               <Bot className="h-4 w-4 text-white" />
             </div>
-            <div className="bg-indigo-500/20 px-4 py-3 rounded-2xl rounded-tl-sm">
-              <span className="flex gap-1">
-                <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-              </span>
+            <div className="bg-indigo-500/20 px-4 py-3 rounded-2xl rounded-tl-sm border border-indigo-500/30">
+              <p className="text-sm italic text-indigo-200">
+                {live.aiTranscript}
+                <span className="inline-block w-1.5 h-4 bg-indigo-400 ml-1 animate-pulse align-middle" />
+              </p>
             </div>
           </motion.div>
         )}
