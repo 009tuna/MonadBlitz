@@ -1,6 +1,7 @@
-.PHONY: build deploy generate-abis get-address account chain compile flatten fork format lint test verify
+.PHONY: build deploy generate-abis get-address account chain compile flatten fork format lint test verify wait-localhost
 
 DEPLOY_SCRIPT ?= script/Deploy.s.sol
+LOCALHOST_RPC_URL ?= http://127.0.0.1:8545
 
 # setup wallet for anvil
 setup-anvil-wallet:
@@ -15,8 +16,23 @@ chain: setup-anvil-wallet
 fork: setup-anvil-wallet
 	anvil --fork-url ${FORK_URL} --chain-id 31337
 
+# Wait for local chain to accept RPC calls
+wait-localhost:
+	@if [ "$(RPC_URL)" = "localhost" ]; then \
+		echo "Waiting for local chain at $(LOCALHOST_RPC_URL)..."; \
+		for i in $$(seq 1 60); do \
+			if cast chain-id --rpc-url $(LOCALHOST_RPC_URL) >/dev/null 2>&1; then \
+				echo "Local chain is ready."; \
+				exit 0; \
+			fi; \
+			sleep 1; \
+		done; \
+		echo "Error: local chain did not become ready at $(LOCALHOST_RPC_URL)"; \
+		exit 1; \
+	fi
+
 # Deploy the contracts
-deploy:
+deploy: wait-localhost
 	@if [ ! -f "$(DEPLOY_SCRIPT)" ]; then 		echo "Error: Deploy script '$(DEPLOY_SCRIPT)' not found"; 		exit 1; 	fi
 	@if [ "$(RPC_URL)" = "localhost" ]; then 		if [ "$(ETH_KEYSTORE_ACCOUNT)" = "scaffold-eth-default" ]; then 			forge script $(DEPLOY_SCRIPT) --rpc-url localhost --password localhost --broadcast --ffi; 		else 			forge script $(DEPLOY_SCRIPT) --rpc-url localhost --broadcast --ffi; 		fi 	else 		forge script $(DEPLOY_SCRIPT) --rpc-url $(RPC_URL) --broadcast --ffi; 	fi
 
@@ -58,4 +74,3 @@ test:
 # Verify contracts
 verify:
 	forge script script/VerifyAll.s.sol --ffi --rpc-url $(RPC_URL)
-
