@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { GoogleGenAI, Modality } from "@google/genai";
 
-const DEFAULT_GEMINI_LIVE_MODEL = "gemini-3.1-flash-live-preview";
+const GEMINI_LIVE_MODEL = "models/gemini-3.1-flash-live-preview";
 
 export interface ChatMessage {
   role: "student" | "ai";
@@ -14,8 +14,16 @@ export interface ChatMessage {
 interface UseGeminiLiveReturn {
   connect: (teacherName: string, teacherBio: string, targetLanguage: string, persona: string) => Promise<void>;
   disconnect: () => void;
+  sendTextMessage: (
+    teacherName: string,
+    teacherBio: string,
+    targetLanguage: string,
+    persona: string,
+    message?: string,
+  ) => Promise<void>;
   isConnected: boolean;
   isConnecting: boolean;
+  isTextSending: boolean;
   aiSpeaking: boolean;
   messages: ChatMessage[];
   studentTranscript: string;
@@ -26,6 +34,7 @@ interface UseGeminiLiveReturn {
 export function useGeminiLive(): UseGeminiLiveReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isTextSending, setIsTextSending] = useState(false);
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [studentTranscript, setStudentTranscript] = useState("");
@@ -33,10 +42,18 @@ export function useGeminiLive(): UseGeminiLiveReturn {
   const [error, setError] = useState<string | null>(null);
 
   const sessionRef = useRef<any>(null);
+  const messagesRef = useRef<ChatMessage[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const pushMessage = useCallback((message: ChatMessage) => {
+    setMessages(prev => {
+      const next = [...prev, message];
+      messagesRef.current = next;
+      return next;
+    });
+  }, []);
 
   // Student transcript buffer — mesaj olarak eklemek icin
   const studentBufferRef = useRef("");
@@ -45,9 +62,7 @@ export function useGeminiLive(): UseGeminiLiveReturn {
   // Audio chunk'lari oynat
   const playAudioChunk = useCallback((base64Data: string) => {
     try {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new AudioContext({ sampleRate: 24000 });
-      }
+      if (!audioContextRef.current) return;
       const ctx = audioContextRef.current;
 
       // Base64 -> ArrayBuffer
@@ -72,8 +87,13 @@ export function useGeminiLive(): UseGeminiLiveReturn {
       source.connect(ctx.destination);
       source.start();
 
+      console.log("Playing AI audio chunk...");
       setAiSpeaking(true);
-      source.onended = () => setAiSpeaking(false);
+      source.onended = () => {
+        // Tum source'lar bittiginde aiSpeaking false olmali
+        // Basitlik icin son chunk bitince false yapiyoruz
+        setAiSpeaking(false);
+      };
     } catch (e) {
       console.error("Audio oynatma hatasi:", e);
     }
@@ -83,19 +103,68 @@ export function useGeminiLive(): UseGeminiLiveReturn {
   const flushStudentBuffer = useCallback(() => {
     const text = studentBufferRef.current.trim();
     if (text) {
-      setMessages(prev => [...prev, { role: "student", text, timestamp: Date.now() }]);
+      pushMessage({ role: "student", text, timestamp: Date.now() });
       studentBufferRef.current = "";
     }
-  }, []);
+  }, [pushMessage]);
 
   // Flush AI buffer as message
   const flushAiBuffer = useCallback(() => {
     const text = aiBufferRef.current.trim();
     if (text) {
-      setMessages(prev => [...prev, { role: "ai", text, timestamp: Date.now() }]);
+      pushMessage({ role: "ai", text, timestamp: Date.now() });
       aiBufferRef.current = "";
     }
-  }, []);
+  }, [pushMessage]);
+
+  const sendTextMessage = useCallback(async (
+    teacherName: string,
+    teacherBio: string,
+    targetLanguage: string,
+    persona: string,
+    message = "",
+  ) => {
+    setIsTextSending(true);
+    setError(null);
+
+    try {
+      const trimmedMessage = message.trim();
+      const nextHistory = messagesRef.current.map(turn => ({ role: turn.role, text: turn.text }));
+      if (trimmedMessage) {
+        pushMessage({ role: "student", text: trimmedMessage, timestamp: Date.now() });
+        nextHistory.push({ role: "student", text: trimmedMessage });
+      }
+
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teacherName,
+          teacherBio,
+          targetLanguage,
+          persona,
+          message: trimmedMessage,
+          history: nextHistory,
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || "AI sohbeti baslatilamadi");
+      }
+
+      pushMessage({
+        role: "ai",
+        text: payload.reply || "Hello! What would you like to talk about today?",
+        timestamp: Date.now(),
+      });
+    } catch (err: any) {
+      console.error("AI text chat hatasi:", err);
+      setError(err.message || "AI sohbeti baslatilamadi");
+    } finally {
+      setIsTextSending(false);
+    }
+  }, [pushMessage]);
 
   const connect = useCallback(async (
     teacherName: string,
@@ -107,6 +176,14 @@ export function useGeminiLive(): UseGeminiLiveReturn {
     setError(null);
 
     try {
+      // AudioContext'i burada olustur/aktif et (browser kilidini acmak icin)
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+      }
+      if (audioContextRef.current.state === "suspended") {
+        await audioContextRef.current.resume();
+      }
+
       // 1. Ephemeral token al
       const tokenRes = await fetch("/api/live", {
         method: "POST",
@@ -128,13 +205,38 @@ export function useGeminiLive(): UseGeminiLiveReturn {
       });
 
       const session = await ai.live.connect({
-        model: model || DEFAULT_GEMINI_LIVE_MODEL,
+        model: GEMINI_LIVE_MODEL,
         callbacks: {
           onopen: () => {
             setIsConnected(true);
             setIsConnecting(false);
           },
-          onmessage: (msg: any) => {
+          onmessage: async (msg: any) => {
+            // Function call handling
+            if (msg.serverContent?.modelTurn?.parts) {
+              for (const part of msg.serverContent.modelTurn.parts) {
+                if (part.functionCall) {
+                  const { name, args, callId } = part.functionCall;
+                  console.log("AI Function Call:", name, args);
+                  
+                  if (name === "stopSession") {
+                    // We need a way to trigger stopSession from here.
+                    // Since this is a hook, we can emit an event or use a callback.
+                    window.dispatchEvent(new CustomEvent("speakstream-ai-stop-session"));
+                    
+                    // Send response back to AI
+                    session.sendRealtimeInput({
+                      functionResponses: [{
+                        name,
+                        response: { success: true },
+                        id: callId
+                      }]
+                    });
+                  }
+                }
+              }
+            }
+
             // Ogrenci transcript
             if (msg.serverContent?.inputTranscription?.text) {
               const text = msg.serverContent.inputTranscription.text;
@@ -165,12 +267,21 @@ export function useGeminiLive(): UseGeminiLiveReturn {
             }
           },
           onerror: (e: any) => {
-            console.error("Live API error:", e);
-            setError(e.message || "Baglanti hatasi");
+            console.error("Live API error details:", e);
+            const detailedError = e.message || e.target?.url || "WebSocket Connection Error";
+            setError(`Baglanti hatasi: ${detailedError}`);
             setIsConnected(false);
             setIsConnecting(false);
           },
-          onclose: () => {
+          onclose: (event: any) => {
+            console.warn("Live API connection closed:", event);
+            const closeReason = event.reason || "Bilinmeyen bir sebeple bağlantı kesildi";
+            const closeCode = event.code || "Kod yok";
+            
+            if (closeCode !== 1000) {
+              setError(`Baglanti kesildi (${closeCode}): ${closeReason}`);
+            }
+            
             flushStudentBuffer();
             flushAiBuffer();
             setIsConnected(false);
@@ -178,7 +289,7 @@ export function useGeminiLive(): UseGeminiLiveReturn {
           },
         },
         config: {
-          responseModalities: [Modality.AUDIO],
+          responseModalities: ["audio"],
         },
       });
 
@@ -224,10 +335,12 @@ export function useGeminiLive(): UseGeminiLiveReturn {
         const base64 = btoa(binary);
 
         try {
-          sessionRef.current.sendRealtimeInput({
-            media: {
-              data: base64,
-              mimeType: "audio/pcm;rate=16000",
+          sessionRef.current.send({
+            realtimeInput: {
+              audio: {
+                data: base64,
+                mimeType: "audio/pcm;rate=16000",
+              },
             },
           });
         } catch {
@@ -281,8 +394,10 @@ export function useGeminiLive(): UseGeminiLiveReturn {
   return {
     connect,
     disconnect,
+    sendTextMessage,
     isConnected,
     isConnecting,
+    isTextSending,
     aiSpeaking,
     messages,
     studentTranscript,

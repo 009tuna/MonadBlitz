@@ -6,6 +6,7 @@ import { WriteContractErrorType, WriteContractReturnType } from "wagmi/actions";
 import { WriteContractVariables } from "wagmi/query";
 import { useSelectedNetwork } from "~~/hooks/scaffold-eth";
 import { useDeployedContractInfo, useTransactor } from "~~/hooks/scaffold-eth";
+import { useDemoEscrowWriteContract } from "~~/lib/demoEscrow";
 import { AllowedChainIds, notification } from "~~/utils/scaffold-eth";
 import {
   ContractAbi,
@@ -71,9 +72,10 @@ export function useScaffoldWriteContract<TContractName extends ContractName>(
     }
   }, [configOrName]);
 
-  const { chain: accountChain } = useAccount();
+  const { address: connectedAddress, chain: accountChain } = useAccount();
   const writeTx = useTransactor();
   const [isMining, setIsMining] = useState(false);
+  const demoContractWrite = useDemoEscrowWriteContract(connectedAddress);
 
   const wagmiContractWrite = useWriteContract(finalWriteContractParams);
 
@@ -91,6 +93,10 @@ export function useScaffoldWriteContract<TContractName extends ContractName>(
     options?: ScaffoldWriteContractOptions,
   ) => {
     if (!deployedContractData) {
+      if (contractName === "StreamingTutorEscrow") {
+        return demoContractWrite.writeContractAsync(variables as any) as Promise<WriteContractReturnType | undefined>;
+      }
+
       notification.error("Target Contract is not deployed, did you forget to run `yarn deploy`?");
       return;
     }
@@ -153,6 +159,11 @@ export function useScaffoldWriteContract<TContractName extends ContractName>(
     options?: Omit<ScaffoldWriteContractOptions, "onBlockConfirmation" | "blockConfirmations">,
   ) => {
     if (!deployedContractData) {
+      if (contractName === "StreamingTutorEscrow") {
+        demoContractWrite.writeContract(variables as any);
+        return;
+      }
+
       notification.error("Target Contract is not deployed, did you forget to run `yarn deploy`?");
       return;
     }

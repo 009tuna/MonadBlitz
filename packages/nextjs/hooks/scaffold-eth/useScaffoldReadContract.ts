@@ -5,6 +5,7 @@ import { ReadContractErrorType } from "viem";
 import { useBlockNumber, useReadContract } from "wagmi";
 import { useSelectedNetwork } from "~~/hooks/scaffold-eth";
 import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
+import { useDemoEscrowReadContract } from "~~/lib/demoEscrow";
 import { AllowedChainIds } from "~~/utils/scaffold-eth";
 import {
   AbiFunctionReturnType,
@@ -41,6 +42,10 @@ export const useScaffoldReadContract = <
   const { query: queryOptions, watch, ...readContractConfig } = readConfig;
   // set watch to true by default
   const defaultWatch = watch ?? true;
+  const demoReadContractRes = useDemoEscrowReadContract({
+    functionName: functionName as string,
+    args: args as readonly unknown[] | undefined,
+  });
 
   const readContractHookRes = useReadContract({
     chainId: selectedNetwork.id,
@@ -75,6 +80,10 @@ export const useScaffoldReadContract = <
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blockNumber]);
+
+  if (!deployedContract && contractName === "StreamingTutorEscrow") {
+    return demoReadContractRes as unknown as typeof readContractHookRes;
+  }
 
   return readContractHookRes;
 };

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI, Modality } from "@google/genai";
 
-const DEFAULT_GEMINI_LIVE_MODEL = "gemini-3.1-flash-live-preview";
+const GEMINI_LIVE_MODEL = "models/gemini-3.1-flash-live-preview";
 
 /**
  * POST /api/live
@@ -37,21 +37,36 @@ Rules:
 The student is paying per second they actually speak. Encourage them to talk more, not you.
 Start by warmly greeting them and asking what they'd like to talk about today.`;
 
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: { apiVersion: "v1alpha" },
+    });
 
     const token = await ai.authTokens.create({
       config: {
         uses: 1,
         expireTime: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
         liveConnectConstraints: {
-          model: liveModel,
+          model: GEMINI_LIVE_MODEL,
           config: {
-            responseModalities: [Modality.AUDIO],
+            responseModalities: ["audio"],
             systemInstruction: {
               parts: [{ text: systemInstruction }],
             },
-            inputAudioTranscription: {},
-            outputAudioTranscription: {},
+            tools: [
+              {
+                functionDeclarations: [
+                  {
+                    name: "stopSession",
+                    description: "Stops the current tutoring session. Call this when the student wants to end the lesson or says goodbye.",
+                    parameters: {
+                      type: "OBJECT",
+                      properties: {},
+                    },
+                  },
+                ],
+              },
+            ],
           },
         },
       },

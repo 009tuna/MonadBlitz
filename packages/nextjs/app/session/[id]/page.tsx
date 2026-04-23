@@ -1,27 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { formatEther } from "viem";
 import { useAccount } from "wagmi";
 import { motion } from "framer-motion";
 import { Bot, Clock3, DollarSign, Shield, User } from "lucide-react";
+import { AITutorSession } from "~~/components/speakstream";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
-import { getAITeacher, isAITeacher } from "~~/lib/teacherUtils";
+import { AI_TEACHERS } from "~~/lib/aiTeachers";
+import { AI_TUTOR_POOL_ADDRESS, getAITeacher, isAITeacher } from "~~/lib/teacherUtils";
+
+const LOCAL_STORAGE_TEACHER_KEY = "streaming-tutor-demo-teacher";
 
 export default function SessionPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const { address: connectedAddress } = useAccount();
   const sessionId = BigInt(params.id as string);
-  const aiTeacherAddress = searchParams.get("ai") || "";
-  const isAI = aiTeacherAddress ? isAITeacher(aiTeacherAddress) : false;
-  const aiTeacher = isAI ? getAITeacher(aiTeacherAddress) : null;
+  const [storedAiTeacherAddress, setStoredAiTeacherAddress] = useState("");
 
-  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  const [now, setNow] = useState(0);
   const [isStopping, setIsStopping] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   const { data: sessionData, refetch: refetchSession } = useScaffoldReadContract({
     contractName: "StreamingTutorEscrow",
@@ -37,36 +40,7 @@ export default function SessionPage() {
 
   const { writeContractAsync: writeContract } = useScaffoldWriteContract("StreamingTutorEscrow");
 
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  if (!sessionData) {
-    return (
-      <div className="flex justify-center py-20">
-        <span className="loading loading-spinner loading-lg text-primary" />
-      </div>
-    );
-  }
-
-  const isActive = sessionData.status === 1;
-  const sessionTutorName = isAI && aiTeacher ? aiTeacher.name : tutorData?.name || "Tutor";
-  const elapsedSeconds = isActive
-    ? Math.min(now - Number(sessionData.startTime), Number(sessionData.maxDuration))
-    : Number(sessionData.stopTime > 0n ? sessionData.stopTime - sessionData.startTime : 0n);
-  const liveSpent = isActive ? sessionData.ratePerSecond * BigInt(Math.max(0, elapsedSeconds)) : sessionData.earnedAmount;
-  const spent = liveSpent > sessionData.depositAmount ? sessionData.depositAmount : liveSpent;
-  const remaining = sessionData.depositAmount - spent;
-  const claimable = sessionData.earnedAmount - sessionData.claimedAmount;
-  const refundable = sessionData.depositAmount - sessionData.earnedAmount - sessionData.refundedAmount;
-  const remainingAmount = BigInt(remaining);
-  const claimableAmount = BigInt(claimable);
-  const refundableAmount = BigInt(refundable);
-  const isStudent = connectedAddress?.toLowerCase() === sessionData.student.toLowerCase();
-  const isTutor = connectedAddress?.toLowerCase() === sessionData.tutor.toLowerCase();
-
-  const handleStop = async () => {
+  const handleStop = useCallback(async () => {
     setIsStopping(true);
     try {
       await writeContract({
@@ -79,7 +53,24 @@ export default function SessionPage() {
     } finally {
       setIsStopping(false);
     }
-  };
+  }, [sessionId, writeContract, refetchSession]);
+
+  useEffect(() => {
+    setIsMounted(true);
+    setNow(Math.floor(Date.now() / 1000));
+    const timer = window.setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
+    
+    const handleAIStop = () => {
+      console.log("AI requested session stop");
+      handleStop();
+    };
+    window.addEventListener("speakstream-ai-stop-session", handleAIStop);
+
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("speakstream-ai-stop-session", handleAIStop);
+    };
+  }, [handleStop]);
 
   const handleClaim = async () => {
     setIsClaiming(true);
@@ -111,6 +102,67 @@ export default function SessionPage() {
     }
   };
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const savedTeacherAddress = window.localStorage.getItem(LOCAL_STORAGE_TEACHER_KEY) || "";
+    setStoredAiTeacherAddress(savedTeacherAddress);
+  }, []);
+
+  useEffect(() => {
+    const aiFromQuery = searchParams.get("ai") || "";
+    if (typeof window === "undefined" || !aiFromQuery || !isAITeacher(aiFromQuery)) return;
+    window.localStorage.setItem(LOCAL_STORAGE_TEACHER_KEY, aiFromQuery);
+    setStoredAiTeacherAddress(aiFromQuery);
+  }, [searchParams]);
+
+  const sessionUsesAiPool = useMemo(
+    () => sessionData?.tutor?.toLowerCase() === AI_TUTOR_POOL_ADDRESS.toLowerCase(),
+    [sessionData?.tutor],
+  );
+
+  const resolvedAiTeacherAddress = useMemo(() => {
+    const aiFromQuery = searchParams.get("ai") || "";
+
+    if (aiFromQuery && isAITeacher(aiFromQuery)) {
+      return aiFromQuery;
+    }
+
+    if (sessionUsesAiPool && storedAiTeacherAddress && isAITeacher(storedAiTeacherAddress)) {
+      return storedAiTeacherAddress;
+    }
+
+    if (sessionUsesAiPool) {
+      return AI_TEACHERS[0].address;
+    }
+
+    return "";
+  }, [searchParams, sessionUsesAiPool, storedAiTeacherAddress]);
+  if (!isMounted || !sessionData) {
+    return (
+      <div className="flex justify-center py-20">
+        <span className="loading loading-spinner loading-lg text-primary" />
+      </div>
+    );
+  }
+
+  const isAI = sessionUsesAiPool || (Boolean(resolvedAiTeacherAddress) && isAITeacher(resolvedAiTeacherAddress));
+  const aiTeacher = isAI ? getAITeacher(resolvedAiTeacherAddress) : null;
+  const isActive = sessionData.status === 1;
+  const sessionTutorName = isAI && aiTeacher ? aiTeacher.name : tutorData?.name || "Tutor";
+  const elapsedSeconds = isActive
+    ? Math.min(now - Number(sessionData.startTime), Number(sessionData.maxDuration))
+    : Number(sessionData.stopTime > 0n ? sessionData.stopTime - sessionData.startTime : 0n);
+  const liveSpent = isActive ? sessionData.ratePerSecond * BigInt(Math.max(0, elapsedSeconds)) : sessionData.earnedAmount;
+  const spent = liveSpent > sessionData.depositAmount ? sessionData.depositAmount : liveSpent;
+  const remaining = sessionData.depositAmount - spent;
+  const claimable = sessionData.earnedAmount - sessionData.claimedAmount;
+  const refundable = sessionData.depositAmount - sessionData.earnedAmount - sessionData.refundedAmount;
+  const remainingAmount = BigInt(remaining);
+  const claimableAmount = BigInt(claimable);
+  const refundableAmount = BigInt(refundable);
+  const isStudent = connectedAddress?.toLowerCase() === sessionData.student.toLowerCase();
+  const isTutor = connectedAddress?.toLowerCase() === sessionData.tutor.toLowerCase();
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <motion.div
@@ -135,6 +187,23 @@ export default function SessionPage() {
           {isActive ? "ACTIVE" : "STOPPED"}
         </div>
       </motion.div>
+
+      {isAI && aiTeacher && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-6 rounded-3xl border border-indigo-500/20 bg-base-100 p-6 shadow-xl"
+        >
+          <AITutorSession
+            teacherName={aiTeacher.name}
+            teacherBio={aiTeacher.bio}
+            targetLanguage={aiTeacher.targetLanguage}
+            persona={aiTeacher.persona}
+            avatar={aiTeacher.avatar}
+            isActive={isActive}
+          />
+        </motion.div>
+      )}
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="card bg-base-100 shadow-xl">

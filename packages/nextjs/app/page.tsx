@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { NextPage } from "next";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatEther, parseEther } from "viem";
 import { useAccount } from "wagmi";
@@ -40,18 +41,21 @@ type SessionStartedArgs = {
 };
 
 const Home: NextPage = () => {
+  const router = useRouter();
   const { address: connectedAddress } = useAccount();
   const [depositAmount, setDepositAmount] = useState("0.2");
   const [selectedDuration, setSelectedDuration] = useState(600);
   const [selectedTeacherAddress, setSelectedTeacherAddress] = useState<string>(AI_TEACHERS[0].address);
   const [currentSessionId, setCurrentSessionId] = useState<bigint | undefined>(undefined);
   const [currentSessionTeacherAddress, setCurrentSessionTeacherAddress] = useState<string | undefined>(undefined);
-  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  const [now, setNow] = useState(0);
   const [isDepositing, setIsDepositing] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
 
   const contractTeacherAddress = getContractAddressForTeacher(selectedTeacherAddress);
   const selectedAiTeacher = isAITeacher(selectedTeacherAddress) ? getAITeacher(selectedTeacherAddress) : null;
@@ -107,12 +111,16 @@ const Home: NextPage = () => {
           setCurrentSessionTeacherAddress(selectedTeacherAddress);
           window.localStorage.setItem(LOCAL_STORAGE_SESSION_KEY, sessionId.toString());
           window.localStorage.setItem(LOCAL_STORAGE_TEACHER_KEY, selectedTeacherAddress);
+          const suffix = isAITeacher(selectedTeacherAddress) ? `?ai=${encodeURIComponent(selectedTeacherAddress)}` : "";
+          router.push(`/session/${sessionId.toString()}${suffix}`);
         }
       }
     },
   });
 
   useEffect(() => {
+    setIsMounted(true);
+    setNow(Math.floor(Date.now() / 1000));
     const timer = window.setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
     return () => window.clearInterval(timer);
   }, []);
@@ -197,6 +205,23 @@ const Home: NextPage = () => {
     ? getAITeacher(resolvedSessionTeacherAddress)?.name || "AI Tutor"
     : currentSessionTutor?.name || "Tutor";
 
+  useEffect(() => {
+    if (!currentSessionId || !currentSession || currentSession.status !== 1) {
+      return;
+    }
+
+    const isCurrentSessionAI = currentSession.tutor.toLowerCase() === AI_TUTOR_POOL_ADDRESS.toLowerCase();
+    const aiTeacherAddress =
+      isCurrentSessionAI && isAITeacher(resolvedSessionTeacherAddress)
+        ? resolvedSessionTeacherAddress
+        : isCurrentSessionAI
+          ? AI_TEACHERS[0].address
+          : "";
+    const suffix = aiTeacherAddress ? `?ai=${encodeURIComponent(aiTeacherAddress)}` : "";
+
+    router.replace(`/session/${currentSessionId.toString()}${suffix}`);
+  }, [currentSession, currentSessionId, resolvedSessionTeacherAddress, router]);
+
   const handleDeposit = async () => {
     if (!depositAmount || !connectedAddress) return;
     setIsDepositing(true);
@@ -217,13 +242,18 @@ const Home: NextPage = () => {
     if (!selectedTeacher || !connectedAddress || !hasEnoughBalance || isActiveSession) return;
     setIsStarting(true);
     try {
-      await startSession({
+      const result = await startSession({
         functionName: "startSession",
         args: [contractTeacherAddress, BigInt(selectedDuration)],
       });
       setCurrentSessionTeacherAddress(selectedTeacherAddress);
       window.localStorage.setItem(LOCAL_STORAGE_TEACHER_KEY, selectedTeacherAddress);
       await refetchStudentBalance();
+      const demoSessionId = result as unknown;
+      if (typeof demoSessionId === "bigint") {
+        const suffix = isAITeacher(selectedTeacherAddress) ? `?ai=${encodeURIComponent(selectedTeacherAddress)}` : "";
+        router.push(`/session/${demoSessionId.toString()}${suffix}`);
+      }
     } catch (error) {
       console.error("Session start hatasi:", error);
     } finally {
@@ -301,6 +331,10 @@ const Home: NextPage = () => {
             Ogrenci once MON yatirir, session baslar, gecen sure kadar earned hesaplanir. Session durunca tutor payini
             claim eder, kalan escrow ogrenciye iade edilir.
           </p>
+          <div className="mx-auto mt-4 max-w-3xl rounded-2xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning-content">
+            Local demo modunda bakiye ekleme gercek MON transferi yapmaz. Gercek para akisi icin kontratin deploy edilip
+            `NEXT_PUBLIC_STREAMING_TUTOR_ESCROW_ADDRESS` ile baglanmasi gerekir.
+          </div>
         </motion.div>
 
         <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr,0.8fr]">
@@ -310,9 +344,11 @@ const Home: NextPage = () => {
                 <div className="rounded-2xl border border-base-300 p-4">
                   <div className="flex items-center gap-2 text-sm text-base-content/60">
                     <Wallet className="h-4 w-4" />
-                    Escrow bakiyesi
+                    Demo bakiyesi
                   </div>
-                  <div className="mt-2 text-3xl font-bold">{Number(formatEther(availableBalance)).toFixed(4)} MON</div>
+                  <div className="mt-2 text-3xl font-bold">
+                    {isMounted ? Number(formatEther(availableBalance)).toFixed(4) : "0.0000"} MON
+                  </div>
                 </div>
                 <div className="rounded-2xl border border-base-300 p-4">
                   <div className="flex items-center gap-2 text-sm text-base-content/60">
@@ -385,7 +421,7 @@ const Home: NextPage = () => {
               <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4">
                 <div className="mb-3 flex items-center gap-2">
                   <Wallet className="h-4 w-4 text-indigo-400" />
-                  <span className="font-semibold">Bakiye yukle</span>
+                  <span className="font-semibold">Demo bakiye ekle</span>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <input
@@ -397,9 +433,12 @@ const Home: NextPage = () => {
                     onChange={event => setDepositAmount(event.target.value)}
                   />
                   <button className="btn btn-primary" disabled={!connectedAddress || isDepositing} onClick={handleDeposit}>
-                    {isDepositing ? <span className="loading loading-spinner" /> : "Deposit"}
+                    {isDepositing ? <span className="loading loading-spinner" /> : "Demo Bakiye Ekle"}
                   </button>
                 </div>
+                <p className="mt-2 text-xs text-base-content/50">
+                  Bu local preview gercek MON cekmez; sadece seans akisini test etmek icin demo kredi ekler.
+                </p>
               </div>
 
               {selectedTeacher && (
@@ -438,9 +477,9 @@ const Home: NextPage = () => {
             <div className="card-body">
               <h2 className="card-title">Canli session durumu</h2>
 
-              {!currentSession ? (
+              {!isMounted || !currentSession ? (
                 <div className="space-y-4 text-sm text-base-content/60">
-                  <p>Henuz takip edilen bir session yok. Deposit yapip bir tutor secerek demo akisini baslat.</p>
+                  <p>Henuz takip edilen bir session yok. Demo bakiye ekleyip bir tutor secerek akisi baslat.</p>
                   <Link href="/teachers" className="btn btn-outline">
                     Tutor listesini ac
                   </Link>
@@ -510,8 +549,8 @@ const Home: NextPage = () => {
         <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
           {[
             {
-              title: "Deposit once, reuse later",
-              description: "Ogrenci bakiyesi kontratta tutulur. Yeni session icin tekrar para gondermek gerekmez.",
+              title: "Demo credit once, reuse later",
+              description: "Local preview modunda bakiye tarayici hafizasinda tutulur; gercek deployda kontrat escrow bakiyesi kullanilir.",
             },
             {
               title: "Pure time-based billing",
@@ -547,13 +586,16 @@ function HumanTutorOption({
   isSelected: boolean;
   onSelect: (address: string) => void;
 }) {
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
+
   const { data: teacher } = useScaffoldReadContract({
     contractName: "StreamingTutorEscrow",
     functionName: "getTutor",
     args: [address],
   });
 
-  if (!teacher || !teacher.wallet || teacher.wallet === "0x0000000000000000000000000000000000000000") {
+  if (!isMounted || !teacher || !teacher.wallet || teacher.wallet === "0x0000000000000000000000000000000000000000") {
     return null;
   }
 

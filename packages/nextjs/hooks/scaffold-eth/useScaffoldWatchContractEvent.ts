@@ -3,6 +3,7 @@ import { Log } from "viem";
 import { useWatchContractEvent } from "wagmi";
 import { useSelectedNetwork } from "~~/hooks/scaffold-eth";
 import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
+import { useDemoEscrowWatchContractEvent } from "~~/lib/demoEscrow";
 import { AllowedChainIds } from "~~/utils/scaffold-eth";
 import { ContractAbi, ContractName, UseScaffoldEventConfig } from "~~/utils/scaffold-eth/contract";
 
@@ -28,6 +29,10 @@ export const useScaffoldWatchContractEvent = <
   const { data: deployedContractData } = useDeployedContractInfo({
     contractName,
     chainId: selectedNetwork.id as AllowedChainIds,
+  });
+  useDemoEscrowWatchContractEvent({
+    eventName: eventName as string,
+    onLogs: onLogs as (logs: { args: Record<string, unknown>; eventName: string }[]) => void,
   });
 
   return useWatchContractEvent({

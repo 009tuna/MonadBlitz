@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { formatEther, parseEther } from "viem";
 import { useAccount } from "wagmi";
@@ -9,7 +9,8 @@ import {
   useScaffoldWatchContractEvent,
   useScaffoldWriteContract,
 } from "~~/hooks/scaffold-eth";
-import { getAITeacher, getContractAddressForTeacher, isAITeacher } from "~~/lib/teacherUtils";
+import { AI_TEACHERS } from "~~/lib/aiTeachers";
+import { AI_TUTOR_POOL_ADDRESS, getAITeacher, getContractAddressForTeacher, isAITeacher } from "~~/lib/teacherUtils";
 import { ArrowRight, Bot, Clock, Globe, Shield, Sparkles, Wallet } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -36,6 +37,8 @@ type SessionStartedArgs = {
   student?: string;
   sessionId?: bigint;
 };
+
+const LOCAL_STORAGE_TEACHER_KEY = "streaming-tutor-demo-teacher";
 
 export default function TeacherDetailPage() {
   const params = useParams();
@@ -69,6 +72,12 @@ export default function TeacherDetailPage() {
     args: [connectedAddress],
   });
 
+  const { data: activeSession } = useScaffoldReadContract({
+    contractName: "StreamingTutorEscrow",
+    functionName: "getSession",
+    args: [activeSessionId],
+  });
+
   const { writeContractAsync: deposit } = useScaffoldWriteContract("StreamingTutorEscrow");
   const { writeContractAsync: startSession } = useScaffoldWriteContract("StreamingTutorEscrow");
 
@@ -80,6 +89,9 @@ export default function TeacherDetailPage() {
         const { student, sessionId } = log.args as unknown as SessionStartedArgs;
 
         if (student?.toLowerCase() === connectedAddress?.toLowerCase() && sessionId !== undefined) {
+          if (isAI && typeof window !== "undefined") {
+            window.localStorage.setItem(LOCAL_STORAGE_TEACHER_KEY, teacherAddress);
+          }
           const suffix = isAI ? `?ai=${encodeURIComponent(teacherAddress)}` : "";
           router.push(`/session/${sessionId.toString()}${suffix}`);
         }
@@ -123,6 +135,18 @@ export default function TeacherDetailPage() {
   const hasActiveSession = Boolean(activeSessionId && activeSessionId > 0n);
   const langList = teacher.languages.split(",").map((lang: string) => lang.trim()).filter(Boolean);
 
+  useEffect(() => {
+    if (!activeSessionId || activeSessionId <= 0n || activeSession?.status !== 1) {
+      return;
+    }
+
+    const isActiveSessionAI = activeSession.tutor.toLowerCase() === AI_TUTOR_POOL_ADDRESS.toLowerCase();
+    const aiTeacherAddress = isActiveSessionAI ? (isAI ? teacherAddress : AI_TEACHERS[0].address) : "";
+    const suffix = aiTeacherAddress ? `?ai=${encodeURIComponent(aiTeacherAddress)}` : "";
+
+    router.replace(`/session/${activeSessionId.toString()}${suffix}`);
+  }, [activeSession, activeSessionId, isAI, router, teacherAddress]);
+
   const handleFund = async () => {
     if (!connectedAddress || !topUpAmount) return;
     setIsFunding(true);
@@ -145,10 +169,18 @@ export default function TeacherDetailPage() {
     setIsStarting(true);
 
     try {
-      await startSession({
+      const result = await startSession({
         functionName: "startSession",
         args: [contractTeacherAddress, BigInt(selectedDuration)],
       });
+      if (isAI && typeof window !== "undefined") {
+        window.localStorage.setItem(LOCAL_STORAGE_TEACHER_KEY, teacherAddress);
+      }
+      const demoSessionId = result as unknown;
+      if (typeof demoSessionId === "bigint") {
+        const suffix = isAI ? `?ai=${encodeURIComponent(teacherAddress)}` : "";
+        router.push(`/session/${demoSessionId.toString()}${suffix}`);
+      }
     } catch (error) {
       console.error("Seans baslatilamadi:", error);
     } finally {
@@ -238,7 +270,8 @@ export default function TeacherDetailPage() {
                 Seansini Planla
               </h2>
               <p className="text-sm text-base-content/50 mb-6">
-                Bu v1 akisinda bakiye once kontrata yatirilir, seans bitince egitmen payini ceker ve kalan bakiye ogrenciye iade edilir.
+                Local demo modunda bakiye gercek MON transferi yapmadan eklenir. Gercek escrow akisi icin kontrat deploy edilip
+                frontend'e baglanmalidir.
               </p>
 
               <div className="mb-6">
@@ -275,7 +308,7 @@ export default function TeacherDetailPage() {
                 </div>
                 <div className="divider my-1" />
                 <div className="flex justify-between items-center">
-                  <span className="text-base-content/60 text-sm">Mevcut bakiye</span>
+                  <span className="text-base-content/60 text-sm">Mevcut demo bakiye</span>
                   <span className="font-semibold">{Number(formatEther(availableBalance)).toFixed(4)} MON</span>
                 </div>
               </div>
@@ -284,7 +317,7 @@ export default function TeacherDetailPage() {
                 <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4 mb-6">
                   <div className="flex items-center gap-2 mb-3">
                     <Wallet className="h-4 w-4 text-indigo-400" />
-                    <span className="font-semibold">Once escrow bakiyesi yukle</span>
+                    <span className="font-semibold">Once demo bakiye ekle</span>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <input
@@ -300,11 +333,11 @@ export default function TeacherDetailPage() {
                       onClick={handleFund}
                       disabled={!connectedAddress || isFunding}
                     >
-                      {isFunding ? <span className="loading loading-spinner" /> : "Bakiye Yukle"}
+                      {isFunding ? <span className="loading loading-spinner" /> : "Demo Bakiye Ekle"}
                     </button>
                   </div>
                   <p className="text-xs text-base-content/50 mt-2">
-                    Alternatif olarak ana sayfadaki demo panelinden de bakiye yukleyebilirsin.
+                    Bu local preview gercek MON cekmez; sadece seans ve AI chat akisini test etmek icin demo kredi ekler.
                   </p>
                 </div>
               )}
