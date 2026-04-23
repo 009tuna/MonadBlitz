@@ -324,10 +324,12 @@ export function useGeminiLive(): UseGeminiLiveReturn {
         const base64 = btoa(binary);
 
         try {
-          sessionRef.current.sendRealtimeInput({
-            media: {
-              data: base64,
-              mimeType: "audio/pcm;rate=16000",
+          sessionRef.current.send({
+            realtimeInput: {
+              audio: {
+                data: base64,
+                mimeType: "audio/pcm;rate=16000",
+              },
             },
           });
         } catch {

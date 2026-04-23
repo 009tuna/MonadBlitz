@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { formatEther } from "viem";
 import { useAccount } from "wagmi";
@@ -26,7 +26,6 @@ export default function SessionPage() {
   const [isRefunding, setIsRefunding] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-
   const { data: sessionData, refetch: refetchSession } = useScaffoldReadContract({
     contractName: "StreamingTutorEscrow",
     functionName: "getSession",
@@ -41,7 +40,7 @@ export default function SessionPage() {
 
   const { writeContractAsync: writeContract } = useScaffoldWriteContract("StreamingTutorEscrow");
 
-  const handleStop = async () => {
+  const handleStop = useCallback(async () => {
     setIsStopping(true);
     try {
       await writeContract({
@@ -54,7 +53,24 @@ export default function SessionPage() {
     } finally {
       setIsStopping(false);
     }
-  };
+  }, [sessionId, writeContract, refetchSession]);
+
+  useEffect(() => {
+    setIsMounted(true);
+    setNow(Math.floor(Date.now() / 1000));
+    const timer = window.setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
+    
+    const handleAIStop = () => {
+      console.log("AI requested session stop");
+      handleStop();
+    };
+    window.addEventListener("speakstream-ai-stop-session", handleAIStop);
+
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("speakstream-ai-stop-session", handleAIStop);
+    };
+  }, [handleStop]);
 
   const handleClaim = async () => {
     setIsClaiming(true);
@@ -85,23 +101,6 @@ export default function SessionPage() {
       setIsRefunding(false);
     }
   };
-
-  useEffect(() => {
-    setIsMounted(true);
-    setNow(Math.floor(Date.now() / 1000));
-    const timer = window.setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
-
-    const handleAIStop = () => {
-      console.log("AI requested session stop");
-      handleStop();
-    };
-    window.addEventListener("speakstream-ai-stop-session", handleAIStop);
-
-    return () => {
-      window.clearInterval(timer);
-      window.removeEventListener("speakstream-ai-stop-session", handleAIStop);
-    };
-  }, [handleStop]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -138,7 +137,6 @@ export default function SessionPage() {
 
     return "";
   }, [searchParams, sessionUsesAiPool, storedAiTeacherAddress]);
-
   if (!isMounted || !sessionData) {
     return (
       <div className="flex justify-center py-20">
