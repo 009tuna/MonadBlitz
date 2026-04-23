@@ -48,7 +48,7 @@ Start by warmly greeting them and asking what they'd like to talk about today.`;
         liveConnectConstraints: {
           model: GEMINI_LIVE_MODEL,
           config: {
-            responseModalities: [Modality.AUDIO],
+            responseModalities: ["audio"],
             systemInstruction: {
               parts: [{ text: systemInstruction }],
             },

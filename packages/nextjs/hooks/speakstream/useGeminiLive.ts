@@ -190,7 +190,7 @@ export function useGeminiLive(): UseGeminiLiveReturn {
       // 2. GoogleGenAI ile Live session baslat
       const ai = new GoogleGenAI({
         apiKey: token,
-        httpOptions: { apiVersion: "v1alpha" },
+        httpOptions: { apiVersion: "v1beta" },
       });
 
       const session = await ai.live.connect({
@@ -200,7 +200,32 @@ export function useGeminiLive(): UseGeminiLiveReturn {
             setIsConnected(true);
             setIsConnecting(false);
           },
-          onmessage: (msg: any) => {
+          onmessage: async (msg: any) => {
+            // Function call handling
+            if (msg.serverContent?.modelTurn?.parts) {
+              for (const part of msg.serverContent.modelTurn.parts) {
+                if (part.functionCall) {
+                  const { name, args, callId } = part.functionCall;
+                  console.log("AI Function Call:", name, args);
+                  
+                  if (name === "stopSession") {
+                    // We need a way to trigger stopSession from here.
+                    // Since this is a hook, we can emit an event or use a callback.
+                    window.dispatchEvent(new CustomEvent("speakstream-ai-stop-session"));
+                    
+                    // Send response back to AI
+                    session.sendRealtimeInput({
+                      functionResponses: [{
+                        name,
+                        response: { success: true },
+                        id: callId
+                      }]
+                    });
+                  }
+                }
+              }
+            }
+
             // Ogrenci transcript
             if (msg.serverContent?.inputTranscription?.text) {
               const text = msg.serverContent.inputTranscription.text;
@@ -237,6 +262,7 @@ export function useGeminiLive(): UseGeminiLiveReturn {
             setIsConnecting(false);
           },
           onclose: () => {
+            console.warn("Live API connection closed.");
             flushStudentBuffer();
             flushAiBuffer();
             setIsConnected(false);
@@ -244,7 +270,7 @@ export function useGeminiLive(): UseGeminiLiveReturn {
           },
         },
         config: {
-          responseModalities: [Modality.AUDIO],
+          responseModalities: ["audio"],
         },
       });
 
