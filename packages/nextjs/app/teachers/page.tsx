@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { Bot, GraduationCap, Search } from "lucide-react";
 import type { NextPage } from "next";
-import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 import { TeacherCard } from "~~/components/speakstream/TeacherCard";
+import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 import { AI_TEACHERS } from "~~/lib/aiTeachers";
 import { AI_TUTOR_POOL_ADDRESS } from "~~/lib/teacherUtils";
-import { Bot, Search, GraduationCap } from "lucide-react";
-import { motion } from "framer-motion";
 
 const languageNames: Record<string, string> = {
   all: "Tumu",
@@ -43,11 +43,7 @@ const TeachersPage: NextPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-10"
-      >
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
         <h1 className="text-4xl md:text-5xl font-bold mb-3">Ogretmenler</h1>
         <p className="text-base-content/60 text-lg max-w-2xl mx-auto">
           AI tutor veya insan ogretmen sec, seansini baslat ve konusmaya basla
@@ -121,11 +117,7 @@ const TeachersPage: NextPage = () => {
         </motion.div>
       )}
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
         <div className="flex items-center gap-2 mb-6">
           <div className="w-8 h-8 rounded-lg bg-base-300 flex items-center justify-center">
             <GraduationCap className="h-4 w-4 text-base-content/60" />
@@ -142,11 +134,15 @@ const TeachersPage: NextPage = () => {
             <GraduationCap className="h-16 w-16 mx-auto text-base-content/20 mb-4" />
             <p className="text-xl text-base-content/50 mb-2">Henuz kayitli ogretmen yok</p>
             <p className="text-base-content/30 mb-4">Ilk ogretmen sen ol!</p>
-            <a href="/become-teacher" className="btn btn-primary btn-sm">Ogretmen Ol</a>
+            <a href="/become-teacher" className="btn btn-primary btn-sm">
+              Ogretmen Ol
+            </a>
           </div>
         ) : (
           <TeacherGrid
-            addresses={(teacherAddresses as string[]).filter(address => address.toLowerCase() !== AI_TUTOR_POOL_ADDRESS.toLowerCase())}
+            addresses={(teacherAddresses as string[]).filter(
+              address => address.toLowerCase() !== AI_TUTOR_POOL_ADDRESS.toLowerCase(),
+            )}
             filterLang={filterLang}
             searchQuery={searchQuery}
           />
@@ -156,7 +152,15 @@ const TeachersPage: NextPage = () => {
   );
 };
 
-function TeacherGrid({ addresses, filterLang, searchQuery }: { addresses: string[]; filterLang: string; searchQuery: string }) {
+function TeacherGrid({
+  addresses,
+  filterLang,
+  searchQuery,
+}: {
+  addresses: string[];
+  filterLang: string;
+  searchQuery: string;
+}) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {addresses.map((addr, i) => (
@@ -173,7 +177,15 @@ function TeacherGrid({ addresses, filterLang, searchQuery }: { addresses: string
   );
 }
 
-function TeacherCardWrapper({ address, filterLang, searchQuery }: { address: string; filterLang: string; searchQuery: string }) {
+function TeacherCardWrapper({
+  address,
+  filterLang,
+  searchQuery,
+}: {
+  address: string;
+  filterLang: string;
+  searchQuery: string;
+}) {
   const { data: teacher } = useScaffoldReadContract({
     contractName: "StreamingTutorEscrow",
     functionName: "getTutor",

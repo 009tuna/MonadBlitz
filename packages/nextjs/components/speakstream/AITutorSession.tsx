@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Bot, MessageSquare, Mic, MicOff, Send, User, Wifi, WifiOff } from "lucide-react";
 import { useGeminiLive } from "~~/hooks/speakstream/useGeminiLive";
-import { Mic, MicOff, Wifi, WifiOff, Bot, User, Send, MessageSquare } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface AITutorSessionProps {
   teacherName: string;
@@ -123,7 +123,8 @@ export const AITutorSession = ({
           <div className="flex flex-col items-center justify-center h-full text-base-content/30 gap-3">
             <Bot className="h-16 w-16" />
             <p className="text-center text-sm">
-              AI ogretmenle konusmaya baslamak icin<br />
+              AI ogretmenle konusmaya baslamak icin
+              <br />
               asagidaki butona basin
             </p>
           </div>
@@ -175,11 +176,7 @@ export const AITutorSession = ({
         </AnimatePresence>
 
         {live.aiSpeaking && live.aiTranscript && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex gap-2 items-end"
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2 items-end">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
               <Bot className="h-4 w-4 text-white" />
             </div>
@@ -228,7 +225,11 @@ export const AITutorSession = ({
               }
             }}
           />
-          <button className="btn btn-primary" onClick={handleSendMessage} disabled={!messageInput.trim() || live.isTextSending}>
+          <button
+            className="btn btn-primary"
+            onClick={handleSendMessage}
+            disabled={!messageInput.trim() || live.isTextSending}
+          >
             {live.isTextSending ? <span className="loading loading-spinner" /> : <Send className="h-4 w-4" />}
           </button>
         </div>
@@ -237,11 +238,7 @@ export const AITutorSession = ({
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-base-content/50">Sesli Mod</div>
           <div className="flex flex-wrap gap-2">
             {!live.isConnected && !live.isConnecting ? (
-              <button
-                className="btn btn-outline"
-                onClick={handleConnect}
-                disabled={!isActive}
-              >
+              <button className="btn btn-outline" onClick={handleConnect} disabled={!isActive}>
                 <Mic className="h-4 w-4" />
                 Mikrofonu Bagla
               </button>
@@ -256,7 +253,9 @@ export const AITutorSession = ({
                 Mikrofonu Durdur
               </button>
             )}
-            {!isActive && <div className="self-center text-xs text-base-content/50">Sesli mod icin aktif seans gerekiyor.</div>}
+            {!isActive && (
+              <div className="self-center text-xs text-base-content/50">Sesli mod icin aktif seans gerekiyor.</div>
+            )}
           </div>
         </div>
       </div>

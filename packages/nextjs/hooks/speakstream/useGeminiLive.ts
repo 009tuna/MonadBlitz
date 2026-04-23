@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { GoogleGenAI, Modality } from "@google/genai";
+import { useCallback, useRef, useState } from "react";
+import { GoogleGenAI } from "@google/genai";
 
 const GEMINI_LIVE_MODEL = "models/gemini-3.1-flash-live-preview";
 
@@ -119,254 +119,252 @@ export function useGeminiLive(): UseGeminiLiveReturn {
     }
   }, [pushMessage]);
 
-  const sendTextMessage = useCallback(async (
-    teacherName: string,
-    teacherBio: string,
-    targetLanguage: string,
-    persona: string,
-    message = "",
-  ) => {
-    setIsTextSending(true);
-    setError(null);
+  const sendTextMessage = useCallback(
+    async (teacherName: string, teacherBio: string, targetLanguage: string, persona: string, message = "") => {
+      setIsTextSending(true);
+      setError(null);
 
-    try {
-      const trimmedMessage = message.trim();
-      const nextHistory = messagesRef.current.map(turn => ({ role: turn.role, text: turn.text }));
-      if (trimmedMessage) {
-        pushMessage({ role: "student", text: trimmedMessage, timestamp: Date.now() });
-        nextHistory.push({ role: "student", text: trimmedMessage });
+      try {
+        const trimmedMessage = message.trim();
+        const nextHistory = messagesRef.current.map(turn => ({ role: turn.role, text: turn.text }));
+        if (trimmedMessage) {
+          pushMessage({ role: "student", text: trimmedMessage, timestamp: Date.now() });
+          nextHistory.push({ role: "student", text: trimmedMessage });
+        }
+
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            teacherName,
+            teacherBio,
+            targetLanguage,
+            persona,
+            message: trimmedMessage,
+            history: nextHistory,
+          }),
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || "AI sohbeti baslatilamadi");
+        }
+
+        pushMessage({
+          role: "ai",
+          text: payload.reply || "Hello! What would you like to talk about today?",
+          timestamp: Date.now(),
+        });
+      } catch (err: any) {
+        console.error("AI text chat hatasi:", err);
+        setError(err.message || "AI sohbeti baslatilamadi");
+      } finally {
+        setIsTextSending(false);
       }
+    },
+    [pushMessage],
+  );
 
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          teacherName,
-          teacherBio,
-          targetLanguage,
-          persona,
-          message: trimmedMessage,
-          history: nextHistory,
-        }),
-      });
+  const connect = useCallback(
+    async (teacherName: string, teacherBio: string, targetLanguage: string, persona: string) => {
+      setIsConnecting(true);
+      setError(null);
 
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error || "AI sohbeti baslatilamadi");
-      }
+      try {
+        // AudioContext'i burada olustur/aktif et (browser kilidini acmak icin)
+        if (!audioContextRef.current) {
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({
+            sampleRate: 24000,
+          });
+        }
+        if (audioContextRef.current.state === "suspended") {
+          await audioContextRef.current.resume();
+        }
 
-      pushMessage({
-        role: "ai",
-        text: payload.reply || "Hello! What would you like to talk about today?",
-        timestamp: Date.now(),
-      });
-    } catch (err: any) {
-      console.error("AI text chat hatasi:", err);
-      setError(err.message || "AI sohbeti baslatilamadi");
-    } finally {
-      setIsTextSending(false);
-    }
-  }, [pushMessage]);
+        // 1. Ephemeral token al
+        const tokenRes = await fetch("/api/live", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ teacherName, teacherBio, targetLanguage, persona }),
+        });
 
-  const connect = useCallback(async (
-    teacherName: string,
-    teacherBio: string,
-    targetLanguage: string,
-    persona: string
-  ) => {
-    setIsConnecting(true);
-    setError(null);
+        if (!tokenRes.ok) {
+          const errData = await tokenRes.json();
+          throw new Error(errData.error || "Token alinamadi");
+        }
 
-    try {
-      // AudioContext'i burada olustur/aktif et (browser kilidini acmak icin)
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-      }
-      if (audioContextRef.current.state === "suspended") {
-        await audioContextRef.current.resume();
-      }
+        const { token } = await tokenRes.json();
 
-      // 1. Ephemeral token al
-      const tokenRes = await fetch("/api/live", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teacherName, teacherBio, targetLanguage, persona }),
-      });
+        // 2. GoogleGenAI ile Live session baslat
+        const ai = new GoogleGenAI({
+          apiKey: token,
+          httpOptions: { apiVersion: "v1alpha" },
+        });
 
-      if (!tokenRes.ok) {
-        const errData = await tokenRes.json();
-        throw new Error(errData.error || "Token alinamadi");
-      }
+        const session = await ai.live.connect({
+          model: GEMINI_LIVE_MODEL,
+          callbacks: {
+            onopen: () => {
+              setIsConnected(true);
+              setIsConnecting(false);
+            },
+            onmessage: async (msg: any) => {
+              // Function call handling
+              if (msg.serverContent?.modelTurn?.parts) {
+                for (const part of msg.serverContent.modelTurn.parts) {
+                  if (part.functionCall) {
+                    const { name, args, callId } = part.functionCall;
+                    console.log("AI Function Call:", name, args);
 
-      const { token } = await tokenRes.json();
+                    if (name === "stopSession") {
+                      // We need a way to trigger stopSession from here.
+                      // Since this is a hook, we can emit an event or use a callback.
+                      window.dispatchEvent(new CustomEvent("speakstream-ai-stop-session"));
 
-      // 2. GoogleGenAI ile Live session baslat
-      const ai = new GoogleGenAI({
-        apiKey: token,
-        httpOptions: { apiVersion: "v1alpha" },
-      });
-
-      const session = await ai.live.connect({
-        model: GEMINI_LIVE_MODEL,
-        callbacks: {
-          onopen: () => {
-            setIsConnected(true);
-            setIsConnecting(false);
-          },
-          onmessage: async (msg: any) => {
-            // Function call handling
-            if (msg.serverContent?.modelTurn?.parts) {
-              for (const part of msg.serverContent.modelTurn.parts) {
-                if (part.functionCall) {
-                  const { name, args, callId } = part.functionCall;
-                  console.log("AI Function Call:", name, args);
-                  
-                  if (name === "stopSession") {
-                    // We need a way to trigger stopSession from here.
-                    // Since this is a hook, we can emit an event or use a callback.
-                    window.dispatchEvent(new CustomEvent("speakstream-ai-stop-session"));
-                    
-                    // Send response back to AI
-                    session.sendRealtimeInput({
-                      functionResponses: [{
-                        name,
-                        response: { success: true },
-                        id: callId
-                      }]
-                    });
+                      // Send response back to AI
+                      session.sendRealtimeInput({
+                        functionResponses: [
+                          {
+                            name,
+                            response: { success: true },
+                            id: callId,
+                          },
+                        ],
+                      });
+                    }
                   }
                 }
               }
-            }
 
-            // Ogrenci transcript
-            if (msg.serverContent?.inputTranscription?.text) {
-              const text = msg.serverContent.inputTranscription.text;
-              studentBufferRef.current += text;
-              setStudentTranscript(prev => prev + text);
-            }
+              // Ogrenci transcript
+              if (msg.serverContent?.inputTranscription?.text) {
+                const text = msg.serverContent.inputTranscription.text;
+                studentBufferRef.current += text;
+                setStudentTranscript(prev => prev + text);
+              }
 
-            // AI transcript
-            if (msg.serverContent?.outputTranscription?.text) {
-              const text = msg.serverContent.outputTranscription.text;
-              aiBufferRef.current += text;
-              setAiTranscript(prev => prev + text);
-            }
+              // AI transcript
+              if (msg.serverContent?.outputTranscription?.text) {
+                const text = msg.serverContent.outputTranscription.text;
+                aiBufferRef.current += text;
+                setAiTranscript(prev => prev + text);
+              }
 
-            // AI audio chunk
-            if (msg.serverContent?.modelTurn?.parts) {
-              for (const part of msg.serverContent.modelTurn.parts) {
-                if (part.inlineData?.data) {
-                  playAudioChunk(part.inlineData.data);
+              // AI audio chunk
+              if (msg.serverContent?.modelTurn?.parts) {
+                for (const part of msg.serverContent.modelTurn.parts) {
+                  if (part.inlineData?.data) {
+                    playAudioChunk(part.inlineData.data);
+                  }
                 }
               }
-            }
 
-            // Turn complete — flush buffers
-            if (msg.serverContent?.turnComplete) {
+              // Turn complete — flush buffers
+              if (msg.serverContent?.turnComplete) {
+                flushStudentBuffer();
+                flushAiBuffer();
+              }
+            },
+            onerror: (e: any) => {
+              console.error("Live API error details:", e);
+              const detailedError = e.message || e.target?.url || "WebSocket Connection Error";
+              setError(`Baglanti hatasi: ${detailedError}`);
+              setIsConnected(false);
+              setIsConnecting(false);
+            },
+            onclose: (event: any) => {
+              console.warn("Live API connection closed:", event);
+              const closeReason = event.reason || "Bilinmeyen bir sebeple bağlantı kesildi";
+              const closeCode = event.code || "Kod yok";
+
+              if (closeCode !== 1000) {
+                setError(`Baglanti kesildi (${closeCode}): ${closeReason}`);
+              }
+
               flushStudentBuffer();
               flushAiBuffer();
-            }
-          },
-          onerror: (e: any) => {
-            console.error("Live API error details:", e);
-            const detailedError = e.message || e.target?.url || "WebSocket Connection Error";
-            setError(`Baglanti hatasi: ${detailedError}`);
-            setIsConnected(false);
-            setIsConnecting(false);
-          },
-          onclose: (event: any) => {
-            console.warn("Live API connection closed:", event);
-            const closeReason = event.reason || "Bilinmeyen bir sebeple bağlantı kesildi";
-            const closeCode = event.code || "Kod yok";
-            
-            if (closeCode !== 1000) {
-              setError(`Baglanti kesildi (${closeCode}): ${closeReason}`);
-            }
-            
-            flushStudentBuffer();
-            flushAiBuffer();
-            setIsConnected(false);
-            setAiSpeaking(false);
-          },
-        },
-        config: {
-          generationConfig: {
-            responseModalities: ["audio"],
-          },
-          transcription: {
-            enabled: true,
-          },
-          speechConfig: {
-            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoide" } },
-          },
-        },
-      });
-
-      sessionRef.current = session;
-
-      // 3. Mikrofon stream'ini baslat
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          sampleRate: 16000,
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-        },
-      });
-      mediaStreamRef.current = stream;
-
-      // AudioContext ile PCM 16kHz stream
-      const audioCtx = new AudioContext({ sampleRate: 16000 });
-      const source = audioCtx.createMediaStreamSource(stream);
-      sourceRef.current = source;
-
-      // ScriptProcessor ile raw PCM al
-      const processor = audioCtx.createScriptProcessor(4096, 1, 1);
-      processorRef.current = processor;
-
-      processor.onaudioprocess = (e) => {
-        if (!sessionRef.current) return;
-
-        const inputData = e.inputBuffer.getChannelData(0);
-        // Float32 -> Int16 PCM
-        const pcm16 = new Int16Array(inputData.length);
-        for (let i = 0; i < inputData.length; i++) {
-          const s = Math.max(-1, Math.min(1, inputData[i]));
-          pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-        }
-
-        // Base64 encode
-        const uint8 = new Uint8Array(pcm16.buffer);
-        let binary = "";
-        for (let i = 0; i < uint8.length; i++) {
-          binary += String.fromCharCode(uint8[i]);
-        }
-        const base64 = btoa(binary);
-
-        try {
-          sessionRef.current.send({
-            realtimeInput: {
-              audio: {
-                data: base64,
-                mimeType: "audio/pcm;rate=16000",
-              },
+              setIsConnected(false);
+              setAiSpeaking(false);
             },
-          });
-        } catch {
-          // Session kapanmis olabilir
-        }
-      };
+          },
+          config: {
+            generationConfig: {
+              responseModalities: ["audio"],
+            },
+            transcription: {
+              enabled: true,
+            },
+            speechConfig: {
+              voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoide" } },
+            },
+          },
+        });
 
-      source.connect(processor);
-      processor.connect(audioCtx.destination);
+        sessionRef.current = session;
 
-    } catch (err: any) {
-      console.error("Live API baglanti hatasi:", err);
-      setError(err.message || "Baglanti kurulamadi");
-      setIsConnecting(false);
-    }
-  }, [playAudioChunk, flushStudentBuffer, flushAiBuffer]);
+        // 3. Mikrofon stream'ini baslat
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            sampleRate: 16000,
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true,
+          },
+        });
+        mediaStreamRef.current = stream;
+
+        // AudioContext ile PCM 16kHz stream
+        const audioCtx = new AudioContext({ sampleRate: 16000 });
+        const source = audioCtx.createMediaStreamSource(stream);
+        sourceRef.current = source;
+
+        // ScriptProcessor ile raw PCM al
+        const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+        processorRef.current = processor;
+
+        processor.onaudioprocess = e => {
+          if (!sessionRef.current) return;
+
+          const inputData = e.inputBuffer.getChannelData(0);
+          // Float32 -> Int16 PCM
+          const pcm16 = new Int16Array(inputData.length);
+          for (let i = 0; i < inputData.length; i++) {
+            const s = Math.max(-1, Math.min(1, inputData[i]));
+            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+          }
+
+          // Base64 encode
+          const uint8 = new Uint8Array(pcm16.buffer);
+          let binary = "";
+          for (let i = 0; i < uint8.length; i++) {
+            binary += String.fromCharCode(uint8[i]);
+          }
+          const base64 = btoa(binary);
+
+          try {
+            sessionRef.current.send({
+              realtimeInput: {
+                audio: {
+                  data: base64,
+                  mimeType: "audio/pcm;rate=16000",
+                },
+              },
+            });
+          } catch {
+            // Session kapanmis olabilir
+          }
+        };
+
+        source.connect(processor);
+        processor.connect(audioCtx.destination);
+      } catch (err: any) {
+        console.error("Live API baglanti hatasi:", err);
+        setError(err.message || "Baglanti kurulamadi");
+        setIsConnecting(false);
+      }
+    },
+    [playAudioChunk, flushStudentBuffer, flushAiBuffer],
+  );
 
   const disconnect = useCallback(() => {
     // Mikrofonu kapat

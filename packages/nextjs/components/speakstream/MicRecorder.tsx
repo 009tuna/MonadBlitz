@@ -20,11 +20,7 @@ export const MicRecorder = ({ isListening, onStart, onStop, error }: MicRecorder
         }`}
         onClick={isListening ? onStop : onStart}
       >
-        {isListening ? (
-          <StopIcon className="h-8 w-8" />
-        ) : (
-          <MicrophoneIcon className="h-8 w-8" />
-        )}
+        {isListening ? <StopIcon className="h-8 w-8" /> : <MicrophoneIcon className="h-8 w-8" />}
       </button>
 
       <span className="text-sm text-base-content/50">

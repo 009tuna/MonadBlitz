@@ -8,7 +8,14 @@ type ChatTurn = {
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
-  const { teacherName, teacherBio, targetLanguage, persona, message, history = [] } = body as {
+  const {
+    teacherName,
+    teacherBio,
+    targetLanguage,
+    persona,
+    message,
+    history = [],
+  } = body as {
     teacherName?: string;
     teacherBio?: string;
     targetLanguage?: string;

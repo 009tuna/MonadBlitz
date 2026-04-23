@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { VerificationResult } from "~~/hooks/speakstream/useGeminiVerify";
 
 interface ChunkDisplay {
@@ -45,11 +45,7 @@ export const LiveTranscript = ({
               <span className="text-xs text-red-400">KAYIT</span>
             </div>
           )}
-          {isVerifying && (
-            <div className="badge badge-warning badge-sm animate-pulse">
-              AI Dogruluyor...
-            </div>
-          )}
+          {isVerifying && <div className="badge badge-warning badge-sm animate-pulse">AI Dogruluyor...</div>}
         </div>
       </div>
 
@@ -61,9 +57,7 @@ export const LiveTranscript = ({
         {chunks.length === 0 && !interimText && (
           <div className="flex items-center justify-center h-full text-base-content/30">
             <p className="text-center">
-              {isListening
-                ? "Konusmaya baslayin..."
-                : "Mikrofonu baslatmak icin butona basin"}
+              {isListening ? "Konusmaya baslayin..." : "Mikrofonu baslatmak icin butona basin"}
             </p>
           </div>
         )}
@@ -75,8 +69,8 @@ export const LiveTranscript = ({
               chunk.verified === true
                 ? "bg-green-500/20 text-green-300 border border-green-500/30"
                 : chunk.verified === false
-                ? "bg-red-500/20 text-red-300 border border-red-500/30 line-through"
-                : "bg-base-300 text-base-content/80"
+                  ? "bg-red-500/20 text-red-300 border border-red-500/30 line-through"
+                  : "bg-base-300 text-base-content/80"
             }`}
           >
             {chunk.text}
@@ -98,18 +92,16 @@ export const LiveTranscript = ({
 
       {/* Son dogrulama sonucu */}
       {lastVerification && (
-        <div className={`mt-3 p-3 rounded-xl text-sm ${
-          lastVerification.score >= 50
-            ? "bg-green-500/10 border border-green-500/20"
-            : "bg-red-500/10 border border-red-500/20"
-        }`}>
+        <div
+          className={`mt-3 p-3 rounded-xl text-sm ${
+            lastVerification.score >= 50
+              ? "bg-green-500/10 border border-green-500/20"
+              : "bg-red-500/10 border border-red-500/20"
+          }`}
+        >
           <div className="flex justify-between items-center">
-            <span className="font-semibold">
-              {lastVerification.score >= 50 ? "Dogrulandi" : "Reddedildi"}
-            </span>
-            <span className={`font-mono font-bold ${
-              lastVerification.score >= 50 ? "text-green-400" : "text-red-400"
-            }`}>
+            <span className="font-semibold">{lastVerification.score >= 50 ? "Dogrulandi" : "Reddedildi"}</span>
+            <span className={`font-mono font-bold ${lastVerification.score >= 50 ? "text-green-400" : "text-red-400"}`}>
               Skor: {lastVerification.score}/100
             </span>
           </div>

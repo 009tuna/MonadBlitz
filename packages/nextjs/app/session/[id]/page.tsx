@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { formatEther } from "viem";
-import { useAccount } from "wagmi";
 import { motion } from "framer-motion";
 import { Bot, Clock3, DollarSign, Shield, User } from "lucide-react";
+import { formatEther } from "viem";
+import { useAccount } from "wagmi";
 import { AITutorSession } from "~~/components/speakstream";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { AI_TEACHERS } from "~~/lib/aiTeachers";
@@ -59,7 +59,7 @@ export default function SessionPage() {
     setIsMounted(true);
     setNow(Math.floor(Date.now() / 1000));
     const timer = window.setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
-    
+
     const handleAIStop = () => {
       console.log("AI requested session stop");
       handleStop();
@@ -152,7 +152,9 @@ export default function SessionPage() {
   const elapsedSeconds = isActive
     ? Math.min(now - Number(sessionData.startTime), Number(sessionData.maxDuration))
     : Number(sessionData.stopTime > 0n ? sessionData.stopTime - sessionData.startTime : 0n);
-  const liveSpent = isActive ? sessionData.ratePerSecond * BigInt(Math.max(0, elapsedSeconds)) : sessionData.earnedAmount;
+  const liveSpent = isActive
+    ? sessionData.ratePerSecond * BigInt(Math.max(0, elapsedSeconds))
+    : sessionData.earnedAmount;
   const spent = liveSpent > sessionData.depositAmount ? sessionData.depositAmount : liveSpent;
   const remaining = sessionData.depositAmount - spent;
   const claimable = sessionData.earnedAmount - sessionData.claimedAmount;
@@ -206,7 +208,11 @@ export default function SessionPage() {
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="card bg-base-100 shadow-xl">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card bg-base-100 shadow-xl"
+        >
           <div className="card-body">
             <div className="flex items-center gap-2 text-base-content/60">
               <Clock3 className="h-4 w-4" />
@@ -216,14 +222,18 @@ export default function SessionPage() {
               {Math.floor(elapsedSeconds / 60)
                 .toString()
                 .padStart(2, "0")}
-              :
-              {(elapsedSeconds % 60).toString().padStart(2, "0")}
+              :{(elapsedSeconds % 60).toString().padStart(2, "0")}
             </div>
             <p className="text-sm text-base-content/50">Maksimum {Number(sessionData.maxDuration) / 60} dakika</p>
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="card bg-base-100 shadow-xl">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="card bg-base-100 shadow-xl"
+        >
           <div className="card-body">
             <div className="flex items-center gap-2 text-base-content/60">
               <DollarSign className="h-4 w-4" />
@@ -236,20 +246,31 @@ export default function SessionPage() {
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="card bg-base-100 shadow-xl">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="card bg-base-100 shadow-xl"
+        >
           <div className="card-body">
             <div className="flex items-center gap-2 text-base-content/60">
               <Shield className="h-4 w-4" />
               <span>Kalan Escrow</span>
             </div>
             <div className="text-4xl font-bold">{Number(formatEther(remainingAmount)).toFixed(4)} MON</div>
-            <p className="text-sm text-base-content/50">Baslangic escrow {Number(formatEther(sessionData.depositAmount)).toFixed(4)} MON</p>
+            <p className="text-sm text-base-content/50">
+              Baslangic escrow {Number(formatEther(sessionData.depositAmount)).toFixed(4)} MON
+            </p>
           </div>
         </motion.div>
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="card bg-base-100 shadow-xl">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card bg-base-100 shadow-xl"
+        >
           <div className="card-body">
             <h2 className="card-title">Settlement Durumu</h2>
             <div className="space-y-3 text-sm">
@@ -268,17 +289,26 @@ export default function SessionPage() {
               <div className="divider my-0" />
               <div className="flex justify-between">
                 <span className="text-base-content/60">Claimable</span>
-                <span className="font-semibold text-primary">{Number(formatEther(claimableAmount)).toFixed(4)} MON</span>
+                <span className="font-semibold text-primary">
+                  {Number(formatEther(claimableAmount)).toFixed(4)} MON
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-base-content/60">Refundable</span>
-                <span className="font-semibold text-primary">{Number(formatEther(refundableAmount)).toFixed(4)} MON</span>
+                <span className="font-semibold text-primary">
+                  {Number(formatEther(refundableAmount)).toFixed(4)} MON
+                </span>
               </div>
             </div>
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="card bg-base-100 shadow-xl">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="card bg-base-100 shadow-xl"
+        >
           <div className="card-body">
             <h2 className="card-title">Aksiyonlar</h2>
             <div className="space-y-3">
@@ -289,13 +319,21 @@ export default function SessionPage() {
               )}
 
               {!isActive && isTutor && (
-                <button className="btn btn-primary btn-block" disabled={claimable <= 0n || isClaiming} onClick={handleClaim}>
+                <button
+                  className="btn btn-primary btn-block"
+                  disabled={claimable <= 0n || isClaiming}
+                  onClick={handleClaim}
+                >
                   {isClaiming ? <span className="loading loading-spinner" /> : "Tutor Claim"}
                 </button>
               )}
 
               {!isActive && isStudent && (
-                <button className="btn btn-outline btn-block" disabled={refundable <= 0n || isRefunding} onClick={handleRefund}>
+                <button
+                  className="btn btn-outline btn-block"
+                  disabled={refundable <= 0n || isRefunding}
+                  onClick={handleRefund}
+                >
                   {isRefunding ? <span className="loading loading-spinner" /> : "Kalan Escrow Iadesi"}
                 </button>
               )}
@@ -305,7 +343,9 @@ export default function SessionPage() {
               )}
 
               {connectedAddress && !isStudent && !isTutor && (
-                <div className="text-sm text-base-content/60">Bu session icin aksiyon yetkisi sadece ogrenci ve tutorda.</div>
+                <div className="text-sm text-base-content/60">
+                  Bu session icin aksiyon yetkisi sadece ogrenci ve tutorda.
+                </div>
               )}
             </div>
           </div>

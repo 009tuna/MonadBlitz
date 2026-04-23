@@ -178,7 +178,13 @@ const getReadValue = (functionName: string, args?: readonly unknown[]) => {
   }
 };
 
-export const useDemoEscrowReadContract = ({ functionName, args }: { functionName: string; args?: readonly unknown[] }) => {
+export const useDemoEscrowReadContract = ({
+  functionName,
+  args,
+}: {
+  functionName: string;
+  args?: readonly unknown[];
+}) => {
   const [version, setVersion] = useState(0);
   const data = useMemo(() => getReadValue(functionName, args), [functionName, args, version]);
 
@@ -321,9 +327,10 @@ export const useDemoEscrowWriteContract = (connectedAddress?: string) => {
               Number(session.maxDuration),
             ),
           );
-          const earnedAmount = session.ratePerSecond * elapsed > session.depositAmount
-            ? session.depositAmount
-            : session.ratePerSecond * elapsed;
+          const earnedAmount =
+            session.ratePerSecond * elapsed > session.depositAmount
+              ? session.depositAmount
+              : session.ratePerSecond * elapsed;
 
           session.stopTime = session.startTime + elapsed;
           session.earnedAmount = earnedAmount;

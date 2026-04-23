@@ -1,18 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { Activity, DollarSign, Sparkles, TrendingUp, Wallet } from "lucide-react";
 import { formatEther } from "viem";
 import { useAccount } from "wagmi";
 import { useScaffoldEventHistory, useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
-import { Wallet, DollarSign, TrendingUp, Sparkles, Activity } from "lucide-react";
-import { motion } from "framer-motion";
-import Link from "next/link";
 
 export default function TeacherDashboardPage() {
   const { address: connectedAddress, isConnecting } = useAccount();
   const [claimingSessionId, setClaimingSessionId] = useState<bigint | null>(null);
 
-  const { data: teacherData, isLoading: isTeacherLoading, refetch } = useScaffoldReadContract({
+  const {
+    data: teacherData,
+    isLoading: isTeacherLoading,
+    refetch,
+  } = useScaffoldReadContract({
     contractName: "StreamingTutorEscrow",
     functionName: "getTutor",
     args: [connectedAddress],
@@ -63,9 +67,7 @@ export default function TeacherDashboardPage() {
       <div className="max-w-3xl mx-auto px-4 py-20 text-center">
         <Wallet className="h-16 w-16 mx-auto text-base-content/20 mb-4" />
         <h1 className="text-3xl font-bold mb-2">Cuzdan Baglantisi Bekleniyor</h1>
-        <p className="text-base-content/60">
-          Ogretmen panelini goruntulemek icin lutfen once cuzdanini bagla.
-        </p>
+        <p className="text-base-content/60">Ogretmen panelini goruntulemek icin lutfen once cuzdanini bagla.</p>
       </div>
     );
   }
@@ -113,7 +115,9 @@ export default function TeacherDashboardPage() {
         <div>
           <h1 className="text-3xl font-bold">Hos Geldin, {teacherData.name}</h1>
           <div className="flex items-center gap-2 mt-1">
-            <div className={`w-2 h-2 rounded-full ${teacherData.active ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+            <div
+              className={`w-2 h-2 rounded-full ${teacherData.active ? "bg-green-500 animate-pulse" : "bg-red-500"}`}
+            />
             <span className="text-sm text-base-content/60">
               {teacherData.active ? "Profilin Aktif" : "Profilin Pasif"}
             </span>
@@ -151,7 +155,8 @@ export default function TeacherDashboardPage() {
               <Activity className="h-5 w-5 text-indigo-500" />
             </div>
             <div className="text-3xl font-bold font-mono text-base-content">
-              {Number(formatEther(ratePerHour)).toFixed(4)} <span className="text-lg text-base-content/50">MON/saat</span>
+              {Number(formatEther(ratePerHour)).toFixed(4)}{" "}
+              <span className="text-lg text-base-content/50">MON/saat</span>
             </div>
           </div>
         </motion.div>
@@ -170,9 +175,7 @@ export default function TeacherDashboardPage() {
             <div className="text-3xl font-bold font-mono text-indigo-300 mb-4">
               {Number(claimable).toFixed(4)} <span className="text-lg text-indigo-400/50">MON</span>
             </div>
-            <div className="text-xs text-indigo-400/70">
-              Toplam cekilen: {Number(totalClaimed).toFixed(4)} MON
-            </div>
+            <div className="text-xs text-indigo-400/70">Toplam cekilen: {Number(totalClaimed).toFixed(4)} MON</div>
           </div>
         </motion.div>
       </div>
@@ -243,7 +246,8 @@ function ClaimableSessionCard({
             Ogrenci {session.student.slice(0, 6)}...{session.student.slice(-4)}
           </div>
           <div className="text-xs text-base-content/50">
-            Claimable {Number(formatEther(claimableAmount)).toFixed(4)} MON | Ogrenci iadesi {Number(formatEther(refundPendingAmount)).toFixed(4)} MON
+            Claimable {Number(formatEther(claimableAmount)).toFixed(4)} MON | Ogrenci iadesi{" "}
+            {Number(formatEther(refundPendingAmount)).toFixed(4)} MON
           </div>
         </div>
         <button
