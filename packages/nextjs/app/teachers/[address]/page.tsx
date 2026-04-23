@@ -53,8 +53,9 @@ export default function TeacherDetailPage() {
     eventName: "SessionStarted",
     onLogs: (logs) => {
       for (const log of logs) {
-        if (log.args.student?.toLowerCase() === connectedAddress?.toLowerCase()) {
-          const sessionId = log.args.sessionId;
+        const student = (log.args as Record<string, any>).student as string | undefined;
+        const sessionId = (log.args as Record<string, any>).sessionId;
+        if (student?.toLowerCase() === connectedAddress?.toLowerCase()) {
           // AI tutor ise session URL'ine ai param ekle
           if (isAI) {
             router.push(`/session/${sessionId}?ai=${encodeURIComponent(teacherAddress)}`);

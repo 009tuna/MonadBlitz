@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { GoogleGenAI } from "@google/genai";
 
 /**
  * POST /api/verify
@@ -46,26 +47,26 @@ Asagidaki JSON formatinda cevap ver:
 }`;
 
     try {
-      // OpenAI-compatible API ile Gemini kullan (environment'ta OPENAI_API_KEY mevcut)
-      const { OpenAI } = await import("openai");
-      const client = new OpenAI();
+      const ai = new GoogleGenAI({ apiKey });
 
-      const response = await client.chat.completions.create({
+      const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content: "Sen bir dil ogrenme dogrulama asistanisin. Verilen transcript'i analiz edip JSON formatinda skor donduruyorsun. Sadece JSON dondur, baska bir sey yazma."
-          },
+        contents: [
           {
             role: "user",
-            content: verificationPrompt
-          }
+            parts: [
+              {
+                text: `Sen bir dil ogrenme dogrulama asistanisin. Verilen transcript'i analiz edip JSON formatinda skor donduruyorsun. Sadece JSON dondur, baska bir sey yazma.\n\n${verificationPrompt}`,
+              },
+            ],
+          },
         ],
-        temperature: 0.3,
+        config: {
+          temperature: 0.3,
+        },
       });
 
-      const content = response.choices[0]?.message?.content || "";
+      const content = response.text || "";
 
       // JSON parse et
       const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -80,18 +81,18 @@ Asagidaki JSON formatinda cevap ver:
 
       // Parse basarisiz — fallback
       return NextResponse.json(generateFallbackScore(transcript, durationSeconds));
-
-    } catch (aiError: any) {
-      console.error("AI API hatasi:", aiError.message);
+    } catch (aiError: unknown) {
+      const msg = aiError instanceof Error ? aiError.message : "Bilinmeyen hata";
+      console.error("AI API hatasi:", msg);
       // AI hatasi durumunda fallback skor
       return NextResponse.json(generateFallbackScore(transcript, durationSeconds));
     }
-
-  } catch (error: any) {
-    console.error("Verify endpoint hatasi:", error);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Bilinmeyen hata";
+    console.error("Verify endpoint hatasi:", msg);
     return NextResponse.json(
       { score: 50, verifiedSeconds: 15, reasoning: "Dogrulama hatasi, varsayilan skor atandi" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

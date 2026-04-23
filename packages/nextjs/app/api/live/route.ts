@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
 
 /**
  * POST /api/live
@@ -43,7 +43,7 @@ Start by warmly greeting them and asking what they'd like to talk about today.`;
         liveConnectConstraints: {
           model: "gemini-live-2.5-flash-native-audio",
           config: {
-            responseModalities: ["AUDIO"],
+            responseModalities: [Modality.AUDIO],
             systemInstruction: {
               parts: [{ text: systemInstruction }],
             },
