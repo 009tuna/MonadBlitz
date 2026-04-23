@@ -14,8 +14,16 @@ export interface ChatMessage {
 interface UseGeminiLiveReturn {
   connect: (teacherName: string, teacherBio: string, targetLanguage: string, persona: string) => Promise<void>;
   disconnect: () => void;
+  sendTextMessage: (
+    teacherName: string,
+    teacherBio: string,
+    targetLanguage: string,
+    persona: string,
+    message?: string,
+  ) => Promise<void>;
   isConnected: boolean;
   isConnecting: boolean;
+  isTextSending: boolean;
   aiSpeaking: boolean;
   messages: ChatMessage[];
   studentTranscript: string;
@@ -26,6 +34,7 @@ interface UseGeminiLiveReturn {
 export function useGeminiLive(): UseGeminiLiveReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isTextSending, setIsTextSending] = useState(false);
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [studentTranscript, setStudentTranscript] = useState("");
@@ -33,10 +42,18 @@ export function useGeminiLive(): UseGeminiLiveReturn {
   const [error, setError] = useState<string | null>(null);
 
   const sessionRef = useRef<any>(null);
+  const messagesRef = useRef<ChatMessage[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const pushMessage = useCallback((message: ChatMessage) => {
+    setMessages(prev => {
+      const next = [...prev, message];
+      messagesRef.current = next;
+      return next;
+    });
+  }, []);
 
   // Student transcript buffer — mesaj olarak eklemek icin
   const studentBufferRef = useRef("");
@@ -83,19 +100,68 @@ export function useGeminiLive(): UseGeminiLiveReturn {
   const flushStudentBuffer = useCallback(() => {
     const text = studentBufferRef.current.trim();
     if (text) {
-      setMessages(prev => [...prev, { role: "student", text, timestamp: Date.now() }]);
+      pushMessage({ role: "student", text, timestamp: Date.now() });
       studentBufferRef.current = "";
     }
-  }, []);
+  }, [pushMessage]);
 
   // Flush AI buffer as message
   const flushAiBuffer = useCallback(() => {
     const text = aiBufferRef.current.trim();
     if (text) {
-      setMessages(prev => [...prev, { role: "ai", text, timestamp: Date.now() }]);
+      pushMessage({ role: "ai", text, timestamp: Date.now() });
       aiBufferRef.current = "";
     }
-  }, []);
+  }, [pushMessage]);
+
+  const sendTextMessage = useCallback(async (
+    teacherName: string,
+    teacherBio: string,
+    targetLanguage: string,
+    persona: string,
+    message = "",
+  ) => {
+    setIsTextSending(true);
+    setError(null);
+
+    try {
+      const trimmedMessage = message.trim();
+      const nextHistory = messagesRef.current.map(turn => ({ role: turn.role, text: turn.text }));
+      if (trimmedMessage) {
+        pushMessage({ role: "student", text: trimmedMessage, timestamp: Date.now() });
+        nextHistory.push({ role: "student", text: trimmedMessage });
+      }
+
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teacherName,
+          teacherBio,
+          targetLanguage,
+          persona,
+          message: trimmedMessage,
+          history: nextHistory,
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || "AI sohbeti baslatilamadi");
+      }
+
+      pushMessage({
+        role: "ai",
+        text: payload.reply || "Hello! What would you like to talk about today?",
+        timestamp: Date.now(),
+      });
+    } catch (err: any) {
+      console.error("AI text chat hatasi:", err);
+      setError(err.message || "AI sohbeti baslatilamadi");
+    } finally {
+      setIsTextSending(false);
+    }
+  }, [pushMessage]);
 
   const connect = useCallback(async (
     teacherName: string,
@@ -281,8 +347,10 @@ export function useGeminiLive(): UseGeminiLiveReturn {
   return {
     connect,
     disconnect,
+    sendTextMessage,
     isConnected,
     isConnecting,
+    isTextSending,
     aiSpeaking,
     messages,
     studentTranscript,

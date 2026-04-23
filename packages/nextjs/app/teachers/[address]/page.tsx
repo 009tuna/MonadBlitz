@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { formatEther, parseEther } from "viem";
 import { useAccount } from "wagmi";
@@ -9,7 +9,8 @@ import {
   useScaffoldWatchContractEvent,
   useScaffoldWriteContract,
 } from "~~/hooks/scaffold-eth";
-import { getAITeacher, getContractAddressForTeacher, isAITeacher } from "~~/lib/teacherUtils";
+import { AI_TEACHERS } from "~~/lib/aiTeachers";
+import { AI_TUTOR_POOL_ADDRESS, getAITeacher, getContractAddressForTeacher, isAITeacher } from "~~/lib/teacherUtils";
 import { ArrowRight, Bot, Clock, Globe, Shield, Sparkles, Wallet } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -31,6 +32,8 @@ const durationOptions = [
   { label: "30 dk", seconds: 1800 },
   { label: "60 dk", seconds: 3600 },
 ];
+
+const LOCAL_STORAGE_TEACHER_KEY = "streaming-tutor-demo-teacher";
 
 export default function TeacherDetailPage() {
   const params = useParams();
@@ -64,6 +67,12 @@ export default function TeacherDetailPage() {
     args: [connectedAddress],
   });
 
+  const { data: activeSession } = useScaffoldReadContract({
+    contractName: "StreamingTutorEscrow",
+    functionName: "getSession",
+    args: [activeSessionId],
+  });
+
   const { writeContractAsync: deposit } = useScaffoldWriteContract("StreamingTutorEscrow");
   const { writeContractAsync: startSession } = useScaffoldWriteContract("StreamingTutorEscrow");
 
@@ -76,6 +85,9 @@ export default function TeacherDetailPage() {
         const sessionId = (log.args as Record<string, unknown>).sessionId as bigint | undefined;
 
         if (student?.toLowerCase() === connectedAddress?.toLowerCase() && sessionId !== undefined) {
+          if (isAI && typeof window !== "undefined") {
+            window.localStorage.setItem(LOCAL_STORAGE_TEACHER_KEY, teacherAddress);
+          }
           const suffix = isAI ? `?ai=${encodeURIComponent(teacherAddress)}` : "";
           router.push(`/session/${sessionId.toString()}${suffix}`);
         }
@@ -119,6 +131,18 @@ export default function TeacherDetailPage() {
   const hasActiveSession = Boolean(activeSessionId && activeSessionId > 0n);
   const langList = teacher.languages.split(",").map((lang: string) => lang.trim()).filter(Boolean);
 
+  useEffect(() => {
+    if (!activeSessionId || activeSessionId <= 0n || activeSession?.status !== 1) {
+      return;
+    }
+
+    const isActiveSessionAI = activeSession.tutor.toLowerCase() === AI_TUTOR_POOL_ADDRESS.toLowerCase();
+    const aiTeacherAddress = isActiveSessionAI ? (isAI ? teacherAddress : AI_TEACHERS[0].address) : "";
+    const suffix = aiTeacherAddress ? `?ai=${encodeURIComponent(aiTeacherAddress)}` : "";
+
+    router.replace(`/session/${activeSessionId.toString()}${suffix}`);
+  }, [activeSession, activeSessionId, isAI, router, teacherAddress]);
+
   const handleFund = async () => {
     if (!connectedAddress || !topUpAmount) return;
     setIsFunding(true);
@@ -145,6 +169,9 @@ export default function TeacherDetailPage() {
         functionName: "startSession",
         args: [contractTeacherAddress, BigInt(selectedDuration)],
       });
+      if (isAI && typeof window !== "undefined") {
+        window.localStorage.setItem(LOCAL_STORAGE_TEACHER_KEY, teacherAddress);
+      }
       const demoSessionId = result as unknown;
       if (typeof demoSessionId === "bigint") {
         const suffix = isAI ? `?ai=${encodeURIComponent(teacherAddress)}` : "";

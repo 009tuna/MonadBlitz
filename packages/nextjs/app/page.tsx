@@ -197,6 +197,23 @@ const Home: NextPage = () => {
     ? getAITeacher(resolvedSessionTeacherAddress)?.name || "AI Tutor"
     : currentSessionTutor?.name || "Tutor";
 
+  useEffect(() => {
+    if (!currentSessionId || !currentSession || currentSession.status !== 1) {
+      return;
+    }
+
+    const isCurrentSessionAI = currentSession.tutor.toLowerCase() === AI_TUTOR_POOL_ADDRESS.toLowerCase();
+    const aiTeacherAddress =
+      isCurrentSessionAI && isAITeacher(resolvedSessionTeacherAddress)
+        ? resolvedSessionTeacherAddress
+        : isCurrentSessionAI
+          ? AI_TEACHERS[0].address
+          : "";
+    const suffix = aiTeacherAddress ? `?ai=${encodeURIComponent(aiTeacherAddress)}` : "";
+
+    router.replace(`/session/${currentSessionId.toString()}${suffix}`);
+  }, [currentSession, currentSessionId, resolvedSessionTeacherAddress, router]);
+
   const handleDeposit = async () => {
     if (!depositAmount || !connectedAddress) return;
     setIsDepositing(true);

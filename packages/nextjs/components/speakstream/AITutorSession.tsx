@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useGeminiLive } from "~~/hooks/speakstream/useGeminiLive";
-import { Mic, MicOff, Wifi, WifiOff, Bot, User } from "lucide-react";
+import { Mic, MicOff, Wifi, WifiOff, Bot, User, Send, MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface AITutorSessionProps {
@@ -27,6 +27,7 @@ export const AITutorSession = ({
   const live = useGeminiLive();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showFallbackWarning, setShowFallbackWarning] = useState(false);
+  const [messageInput, setMessageInput] = useState("");
 
   // Otomatik scroll
   useEffect(() => {
@@ -59,6 +60,17 @@ export const AITutorSession = ({
 
   const handleDisconnect = () => {
     live.disconnect();
+  };
+
+  const handleStartTextChat = async () => {
+    await live.sendTextMessage(teacherName, teacherBio, targetLanguage, persona);
+  };
+
+  const handleSendMessage = async () => {
+    const trimmed = messageInput.trim();
+    if (!trimmed || live.isTextSending) return;
+    setMessageInput("");
+    await live.sendTextMessage(teacherName, teacherBio, targetLanguage, persona, trimmed);
   };
 
   return (
@@ -192,33 +204,64 @@ export const AITutorSession = ({
         </div>
       )}
 
-      {/* Mic control */}
-      {isActive && (
-        <div className="flex justify-center mt-4">
-          {!live.isConnected && !live.isConnecting ? (
-            <button
-              className="btn btn-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-none shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all"
-              onClick={handleConnect}
-            >
-              <Mic className="h-5 w-5" />
-              AI Ogretmenle Konusmaya Basla
-            </button>
-          ) : live.isConnecting ? (
-            <button className="btn btn-lg btn-disabled">
-              <span className="loading loading-spinner" />
-              Baglaniyor...
-            </button>
-          ) : (
-            <button
-              className="btn btn-lg btn-error shadow-lg"
-              onClick={handleDisconnect}
-            >
-              <MicOff className="h-5 w-5" />
-              Konusmayi Durdur
-            </button>
-          )}
+      <div className="mt-4 space-y-3">
+        {live.messages.length === 0 && (
+          <button
+            className="btn btn-lg w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-none shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all"
+            onClick={handleStartTextChat}
+            disabled={live.isTextSending}
+          >
+            {live.isTextSending ? <span className="loading loading-spinner" /> : <MessageSquare className="h-5 w-5" />}
+            Sohbeti Baslat
+          </button>
+        )}
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            className="input input-bordered flex-1"
+            placeholder={`${targetLanguage || "English"} dilinde bir sey yaz...`}
+            value={messageInput}
+            onChange={event => setMessageInput(event.target.value)}
+            onKeyDown={event => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                void handleSendMessage();
+              }
+            }}
+          />
+          <button className="btn btn-primary" onClick={handleSendMessage} disabled={!messageInput.trim() || live.isTextSending}>
+            {live.isTextSending ? <span className="loading loading-spinner" /> : <Send className="h-4 w-4" />}
+          </button>
         </div>
-      )}
+
+        <div className="rounded-2xl border border-base-300 p-3">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-base-content/50">Sesli Mod</div>
+          <div className="flex flex-wrap gap-2">
+            {!live.isConnected && !live.isConnecting ? (
+              <button
+                className="btn btn-outline"
+                onClick={handleConnect}
+                disabled={!isActive}
+              >
+                <Mic className="h-4 w-4" />
+                Mikrofonu Bagla
+              </button>
+            ) : live.isConnecting ? (
+              <button className="btn btn-disabled">
+                <span className="loading loading-spinner" />
+                Baglaniyor...
+              </button>
+            ) : (
+              <button className="btn btn-error" onClick={handleDisconnect}>
+                <MicOff className="h-4 w-4" />
+                Mikrofonu Durdur
+              </button>
+            )}
+            {!isActive && <div className="self-center text-xs text-base-content/50">Sesli mod icin aktif seans gerekiyor.</div>}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
