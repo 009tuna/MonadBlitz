@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { GoogleGenAI, Modality } from "@google/genai";
 
-const GEMINI_LIVE_MODEL = "gemini-3.1-flash-live-preview";
+const GEMINI_LIVE_MODEL = "models/gemini-3.1-flash-live-preview";
 
 export interface ChatMessage {
   role: "student" | "ai";
@@ -190,7 +190,7 @@ export function useGeminiLive(): UseGeminiLiveReturn {
       // 2. GoogleGenAI ile Live session baslat
       const ai = new GoogleGenAI({
         apiKey: token,
-        httpOptions: { apiVersion: "v1beta" },
+        httpOptions: { apiVersion: "v1alpha" },
       });
 
       const session = await ai.live.connect({
@@ -257,13 +257,20 @@ export function useGeminiLive(): UseGeminiLiveReturn {
           },
           onerror: (e: any) => {
             console.error("Live API error details:", e);
-            const detailedError = e.message || JSON.stringify(e) || "Unknown connection error";
+            const detailedError = e.message || e.target?.url || "WebSocket Connection Error";
             setError(`Baglanti hatasi: ${detailedError}`);
             setIsConnected(false);
             setIsConnecting(false);
           },
-          onclose: () => {
-            console.warn("Live API connection closed.");
+          onclose: (event: any) => {
+            console.warn("Live API connection closed:", event);
+            const closeReason = event.reason || "Bilinmeyen bir sebeple bağlantı kesildi";
+            const closeCode = event.code || "Kod yok";
+            
+            if (closeCode !== 1000) {
+              setError(`Baglanti kesildi (${closeCode}): ${closeReason}`);
+            }
+            
             flushStudentBuffer();
             flushAiBuffer();
             setIsConnected(false);

@@ -24,6 +24,8 @@ export default function SessionPage() {
   const [isStopping, setIsStopping] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
 
   const { data: sessionData, refetch: refetchSession } = useScaffoldReadContract({
     contractName: "StreamingTutorEscrow",
@@ -40,6 +42,7 @@ export default function SessionPage() {
   const { writeContractAsync: writeContract } = useScaffoldWriteContract("StreamingTutorEscrow");
 
   useEffect(() => {
+    setIsMounted(true);
     setNow(Math.floor(Date.now() / 1000));
     const timer = window.setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
     return () => window.clearInterval(timer);
@@ -81,7 +84,7 @@ export default function SessionPage() {
     return "";
   }, [searchParams, sessionUsesAiPool, storedAiTeacherAddress]);
 
-  if (!sessionData) {
+  if (!isMounted || !sessionData) {
     return (
       <div className="flex justify-center py-20">
         <span className="loading loading-spinner loading-lg text-primary" />

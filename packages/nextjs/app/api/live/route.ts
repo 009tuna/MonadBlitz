@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI, Modality } from "@google/genai";
 
-const GEMINI_LIVE_MODEL = "gemini-3.1-flash-live-preview";
+const GEMINI_LIVE_MODEL = "models/gemini-3.1-flash-live-preview";
 
 /**
  * POST /api/live
