@@ -1,177 +1,289 @@
-# SpeakStream MVP — Kurulum ve Kullanim Rehberi
+# SpeakStream — Setup & Deployment Guide
 
-## Proje Ozeti
+## Overview
 
-SpeakStream, dil ogrenmek isteyen kullanicilarin sectikleri bir ogretmenle canli konusma seansi yaptiklari ve **sadece gercekten konustuklari saniye kadar odeme yaptiklari** bir dApp. Monad Testnet uzerinde calisir.
+SpeakStream is a decentralized language learning platform on Monad where students pay teachers **per second they actually speak**, verified by AI. Built with Scaffold-ETH 2 + Foundry + Next.js.
+
+### Round 2 Additions
+- **Gemini Live API** — Real-time bidirectional audio with AI tutors
+- **3 AI Tutor Personas** — Ayse (English), Mehmet (Business English), Elena (Spanish)
+- **Premium UI** — framer-motion animations, glass morphism, gradient text, recharts
+- **Dual Session Mode** — AI tutor sessions + human teacher sessions
 
 ---
 
-## Dosya Yapisi (Yeni Eklenenler)
+## Prerequisites
+
+- Node.js >= 20.18.3
+- Yarn 4 (corepack)
+- Foundry (forge, cast, anvil)
+- A wallet with Monad Testnet MON (faucet: https://faucet.monad.xyz)
+
+---
+
+## Quick Start
+
+```bash
+# 1. Clone & install
+git clone <your-repo-url>
+cd MonadBlitz
+corepack enable
+yarn install
+
+# 2. Set environment variables
+# packages/foundry/.env
+DEPLOYER_PRIVATE_KEY=0xYOUR_PRIVATE_KEY
+
+# packages/nextjs/.env.local
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# 3. Run tests
+yarn test
+# Expected: 12 tests passing (11 SpeakStream + 1 YourContract)
+
+# 4. Generate deployer account (alternative to .env)
+yarn generate
+
+# 5. Deploy to Monad Testnet
+yarn deploy --network monadTestnet
+
+# 6. Start frontend
+yarn start
+# Open http://localhost:3000
+```
+
+---
+
+## Architecture
+
+```
+Frontend (Next.js)
+├── Teachers Page ──── AI Tutors (Gemini Live) + Human Teachers (on-chain)
+├── Session Page ───── Dual Mode:
+│   ├── AI Mode: Gemini Live bidirectional audio + chat bubbles
+│   └── Human Mode: Web Speech API + LiveTranscript
+├── /api/live ──────── Ephemeral token for Gemini Live API
+├── /api/verify ────── Gemini 2.5 Flash transcript verification
+└── Payment Flow ───── Real-time escrow visualization
+
+Smart Contract (SpeakStream.sol on Monad Testnet)
+├── registerTeacher()
+├── startSession() ──── Lock MON in escrow
+├── releaseElapsed() ── Release verified seconds
+├── endSession() ────── Refund remainder
+└── withdraw() ──────── Teacher withdraws earnings
+```
+
+---
+
+## File Structure (SpeakStream-specific files)
 
 ```
 packages/
 ├── foundry/
 │   ├── contracts/
-│   │   └── SpeakStream.sol              ← Ana smart contract
-│   ├── script/
-│   │   ├── Deploy.s.sol                 ← Guncellendi (SpeakStream'i deploy eder)
-│   │   └── DeploySpeakStream.s.sol      ← SpeakStream deploy + seed data
+│   │   └── SpeakStream.sol              # Main smart contract
 │   ├── test/
-│   │   └── SpeakStream.t.sol            ← 11 test (hepsi yesil)
-│   ├── foundry.toml                     ← monadTestnet RPC eklendi
-│   └── .env                             ← DEPLOYER_PRIVATE_KEY buraya
+│   │   └── SpeakStream.t.sol            # 11 Foundry tests
+│   └── script/
+│       ├── Deploy.s.sol                 # Entry point
+│       └── DeploySpeakStream.s.sol      # Deploy + seed data
+│
 └── nextjs/
     ├── app/
-    │   ├── page.tsx                      ← Homepage (hero + 3 adim + neden Monad)
-    │   ├── teachers/page.tsx             ← Ogretmen listesi
-    │   ├── teachers/[address]/page.tsx   ← Ogretmen detay + seans baslat
-    │   ├── become-teacher/page.tsx       ← Ogretmen kayit formu
-    │   ├── session/[id]/page.tsx         ← ANA DEMO EKRANI (3 sutun)
-    │   ├── leaderboard/page.tsx          ← Leaderboard
-    │   ├── api/verify/route.ts           ← Gemini AI dogrulama endpoint
-    │   └── layout.tsx                    ← Guncellendi (SpeakStream metadata)
-    ├── components/
-    │   ├── Header.tsx                    ← Guncellendi (SpeakStream nav)
-    │   ├── Footer.tsx                    ← Guncellendi (SpeakStream branding)
-    │   └── speakstream/
-    │       ├── TeacherCard.tsx           ← Ogretmen kart componenti
-    │       ├── LiveTranscript.tsx        ← Canli transcript gorunumu
-    │       ├── PaymentFlow.tsx           ← Odeme akisi gorunumu
-    │       ├── MicRecorder.tsx           ← Mikrofon butonu
-    │       └── index.ts
-    ├── hooks/
-    │   └── speakstream/
-    │       ├── useSpeechRecognition.ts   ← Web Speech API hook
-    │       ├── useGeminiVerify.ts        ← AI dogrulama hook
-    │       └── index.ts
-    ├── scaffold.config.ts                ← Guncellendi (Monad Testnet)
-    ├── styles/globals.css                ← Guncellendi (indigo/purple tema)
-    └── .env.local                        ← GEMINI_API_KEY buraya
+    │   ├── page.tsx                      # Homepage (hero + how it works + AI demo)
+    │   ├── teachers/
+    │   │   ├── page.tsx                  # Teacher listing (AI + Human sections)
+    │   │   └── [address]/page.tsx        # Teacher detail + session start
+    │   ├── session/
+    │   │   └── [id]/page.tsx             # Live session (AI or Human mode)
+    │   ├── become-teacher/page.tsx       # Teacher registration form
+    │   ├── leaderboard/page.tsx          # Stats + recharts + rankings
+    │   └── api/
+    │       ├── verify/route.ts           # Gemini AI transcript verification
+    │       └── live/route.ts             # Gemini Live ephemeral token
+    │
+    ├── components/speakstream/
+    │   ├── AITutorSession.tsx            # AI tutor chat with Gemini Live
+    │   ├── LiveTranscript.tsx            # Human session transcript display
+    │   ├── PaymentFlow.tsx               # Real-time payment visualization
+    │   ├── MicRecorder.tsx               # Microphone control
+    │   └── TeacherCard.tsx               # Teacher card (AI/Human variants)
+    │
+    ├── hooks/speakstream/
+    │   ├── useGeminiLive.ts              # Gemini Live API bidirectional audio
+    │   ├── useGeminiVerify.ts            # AI transcript verification
+    │   └── useSpeechRecognition.ts       # Web Speech API wrapper
+    │
+    ├── lib/
+    │   ├── aiTeachers.ts                 # AI teacher definitions (3 personas)
+    │   └── teacherUtils.ts               # Teacher helper functions
+    │
+    ├── styles/globals.css                # Premium CSS (animations, glass, orbs)
+    └── scaffold.config.ts                # Monad Testnet chain config
 ```
 
 ---
 
-## Kurulum Adimlari
+## Smart Contract: SpeakStream.sol
 
-### 1. Bagimliliklari Kur
+### Key Functions
 
-```bash
-cd MonadBlitz
-yarn install
+| Function | Description |
+|----------|-------------|
+| `registerTeacher(name, bio, languages, ratePerSecond)` | Register as teacher |
+| `startSession(teacher, maxDuration)` | Start session, lock MON in escrow |
+| `releaseElapsed(sessionId, elapsed, verifiedSeconds)` | Release payment for verified speech |
+| `endSession(sessionId)` | End session, refund remainder |
+| `withdraw()` | Teacher withdraws earned MON |
+
+### Events
+
+| Event | Description |
+|-------|-------------|
+| `TeacherRegistered(wallet, name)` | New teacher registered |
+| `SessionStarted(sessionId, student, teacher, deposit)` | Session started |
+| `PaymentReleased(sessionId, amount)` | Payment released to teacher |
+| `RefundIssued(sessionId, amount)` | Refund issued to student |
+| `SessionEnded(sessionId)` | Session ended |
+
+---
+
+## AI Tutor System
+
+### How It Works
+
+1. Student selects an AI tutor from the Teachers page
+2. Session is started on-chain (payment goes to AI_TUTOR_POOL_ADDRESS)
+3. Frontend connects to Gemini Live API via ephemeral token
+4. Bidirectional audio: student speaks, AI responds in real-time
+5. Every 30 seconds, transcript is verified by Gemini 2.5 Flash
+6. Verified seconds are released on-chain
+
+### AI Teachers
+
+| Name | Specialty | Languages | Persona |
+|------|-----------|-----------|---------|
+| Ayse — AI English Tutor | Daily conversation | EN, TR | Warm, patient |
+| Mehmet — AI Business English | Business meetings, emails | EN, TR | Professional, direct |
+| Elena — AI Travel Spanish | Travel situations | ES, TR, EN | Friendly, casual |
+
+### Configuration
+
+After deployment, update `AI_TUTOR_POOL_ADDRESS` in `packages/nextjs/lib/aiTeachers.ts` with your deployer address.
+
+---
+
+## Pages
+
+| Page | URL | Description |
+|------|-----|-------------|
+| Homepage | `/` | Hero with gradient text, how it works, AI demo mockup, why Monad stats |
+| Teachers | `/teachers` | AI tutors section + human teachers, search + language filter |
+| Teacher Detail | `/teachers/[address]` | 2-column layout, session planner with cost preview |
+| Become Teacher | `/become-teacher` | Registration form with language selector |
+| Session | `/session/[id]` | **MAIN DEMO** — 3-column: teacher + conversation + payment |
+| Leaderboard | `/leaderboard` | Stats cards, recharts (bar + area), teacher rankings |
+| Debug | `/debug` | Scaffold-ETH contract debug interface |
+
+---
+
+## Environment Variables
+
+### packages/foundry/.env
 ```
-
-### 2. Environment Degiskenleri
-
-**`packages/foundry/.env`:**
-```
-DEPLOYER_PRIVATE_KEY=senin_testnet_private_keyin
+DEPLOYER_PRIVATE_KEY=0x...
 MONAD_RPC_URL=https://testnet-rpc.monad.xyz
 ```
 
-**`packages/nextjs/.env.local`:**
+### packages/nextjs/.env.local
 ```
+GEMINI_API_KEY=your_gemini_api_key
 NEXT_PUBLIC_CHAIN_ID=10143
-GEMINI_API_KEY=senin_gemini_api_keyin
 ```
 
-### 3. Testleri Calistir
+---
+
+## Deployment
 
 ```bash
-yarn test
-```
+# Local (anvil)
+yarn chain          # Terminal 1
+yarn deploy         # Terminal 2
+yarn start          # Terminal 3
 
-Beklenen sonuc: **12 test passed** (11 SpeakStream + 1 YourContract)
-
-### 4. Monad Testnet'e Deploy Et
-
-Oncelikle bir Foundry keystore olustur:
-```bash
-yarn generate
-```
-
-Faucet'tan MON al: https://faucet.monad.xyz
-
-Deploy et:
-```bash
+# Monad Testnet
 yarn deploy --network monadTestnet
-```
-
-Bu komut:
-- SpeakStream kontratini deploy eder
-- 1 test ogretmenini (Ayse Yilmaz) seed'ler
-- ABI'lari frontend'e export eder
-
-### 5. Frontend'i Baslat
-
-```bash
 yarn start
 ```
 
-Tarayicida http://localhost:3000 ac.
+After deployment:
+1. Note the deployed contract address from console output
+2. Note the deployer address (= AI_TUTOR_POOL_ADDRESS)
+3. Update `AI_TUTOR_POOL_ADDRESS` in `lib/aiTeachers.ts`
+4. The ABI is auto-exported to `packages/nextjs/contracts/deployedContracts.ts`
 
 ---
 
-## Sayfalar ve Islevleri
+## Demo Scenario (3 Minutes)
 
-| Sayfa | URL | Islev |
-|-------|-----|-------|
-| Homepage | `/` | Hero, 3 adim aciklama, neden Monad, CTA |
-| Ogretmenler | `/teachers` | Ogretmen listesi, dil filtresi |
-| Ogretmen Detay | `/teachers/[address]` | Bilgiler, sure secimi, seans baslat |
-| Ogretmen Ol | `/become-teacher` | Kayit formu |
-| Seans | `/session/[id]` | **ANA DEMO EKRANI** — mikrofon, transcript, odeme |
-| Leaderboard | `/leaderboard` | Top ogretmenler, son seanslar |
-| Debug | `/debug` | Scaffold-ETH contract debug |
+### AI Tutor Demo (recommended)
+1. Show homepage — gradient text, "Konus. Ogren. Kazan."
+2. `/teachers` — Show AI tutors section with Gemini Live badge
+3. Click "Ayse — AI English Tutor"
+4. Start 5 min session (lock ~0.003 MON)
+5. Click "AI Ogretmenle Konusmaya Basla"
+6. Have a short conversation — show chat bubbles appearing
+7. Wait 30s — AI verification runs, payment released
+8. End session — show refund of unused time
+9. Show leaderboard with charts
 
----
-
-## Smart Contract Fonksiyonlari
-
-| Fonksiyon | Aciklama |
-|-----------|----------|
-| `registerTeacher(name, bio, languages, ratePerSecond)` | Ogretmen kaydi |
-| `updateTeacher(name, bio, languages, ratePerSecond)` | Bilgi guncelleme |
-| `setTeacherActive(bool)` | Aktif/pasif durumu |
-| `startSession(teacher, maxDurationSeconds)` | Seans baslat (payable) |
-| `releaseElapsed(sessionId, elapsedSeconds, verifiedSeconds)` | Odeme serbest birak |
-| `endSession(sessionId)` | Seans bitir, kalan iade |
-| `withdraw()` | Ogretmen para cekme |
-| `getTeacher(address)` | Ogretmen bilgisi (view) |
-| `getSession(uint256)` | Seans bilgisi (view) |
-| `getAllTeachers()` | Tum ogretmen adresleri (view) |
+### Human Teacher Demo
+1. `/become-teacher` — Register as teacher
+2. From another wallet, start session with that teacher
+3. Speak into microphone — show live transcript
+4. AI verifies every 30s — green/red badges
+5. End session, teacher withdraws
 
 ---
 
-## Demo Senaryosu (2 Dakika)
+## Tech Stack
 
-1. Homepage'i goster — "Konustugu saniye kadar ode"
-2. `/teachers` — Kayitli ogretmenleri goster
-3. Bir ogretmen sec, 5 dk seans baslat (0.03 MON kilitle)
-4. `/session/[id]` — Mikrofonu ac, konusmaya basla
-5. Canli transcript akisini goster
-6. 30 sn sonra AI dogrulama — yesil badge
-7. 10 sn sessiz kal — AI reddeder, kirmizi badge, para iade
-8. "Seansi bitir" — kalan bakiye iade
-9. Ogretmen `withdraw()` ile kazancini ceker
-
----
-
-## Onemli Notlar
-
-- **Chrome/Chromium zorunlu** — Web Speech API sadece Chrome'da calisir
-- **Mikrofon izni** — Tarayici mikrofon izni isteyecek, kabul edin
-- **Gemini API Key** — Yoksa fallback skor sistemi devreye girer (demo icin calismaya devam eder)
-- **Monad Testnet** — Gas neredeyse sifir, bloklar 400ms
-- **ReentrancyGuard** — withdraw ve endSession fonksiyonlarinda guvenlik
+| Layer | Technology |
+|-------|-----------|
+| Smart Contract | Solidity 0.8.19 + OpenZeppelin |
+| Testing | Foundry (forge test) — 12 tests |
+| Frontend | Next.js 15 + React 19 + TypeScript |
+| Styling | TailwindCSS + DaisyUI + framer-motion |
+| Icons | lucide-react |
+| Charts | recharts |
+| Wallet | RainbowKit + wagmi + viem |
+| AI Voice | Gemini Live API (native audio) |
+| AI Verify | Gemini 2.5 Flash |
+| Speech | Web Speech API (human sessions) |
+| Chain | Monad Testnet (Chain ID: 10143) |
 
 ---
 
-## Kontrol Listesi
+## Important Notes
 
-- [ ] Contract Monad testnet'te deployed
-- [ ] `yarn start` hatasiz calisiyor
-- [ ] MetaMask Monad testnet'e baglaniyor
-- [ ] Test ogretmenler seed'lenmis, `/teachers`'da gorunuyor
-- [ ] Bir seans tam dongusu calisiyor: baslat → konus → AI dogrula → bitir → withdraw
-- [ ] Chrome'da mikrofon izni calisiyor
-- [ ] Demo yedek video var
+- **Chrome/Chromium required** — Web Speech API only works in Chrome
+- **Microphone permission** — Browser will ask for mic access, accept it
+- **Gemini API Key** — Without it, fallback scoring system activates (demo still works)
+- **Monad Testnet** — Gas is nearly zero, blocks every 400ms
+- **ReentrancyGuard** — Security on withdraw and endSession functions
+- **AI Tutor Pool** — All AI sessions route payments to a single pool address
+
+---
+
+## Checklist
+
+- [ ] Contract deployed on Monad Testnet
+- [ ] `yarn start` runs without errors
+- [ ] MetaMask connected to Monad Testnet
+- [ ] AI tutors visible on `/teachers`
+- [ ] AI session works: connect → speak → AI responds → verify → payment
+- [ ] Human session works: start → speak → transcript → verify → end
+- [ ] Leaderboard shows charts
+- [ ] Chrome microphone permission works
+- [ ] Demo backup video recorded
