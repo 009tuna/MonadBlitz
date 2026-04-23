@@ -141,10 +141,15 @@ export default function TeacherDetailPage() {
     setIsStarting(true);
 
     try {
-      await startSession({
+      const result = await startSession({
         functionName: "startSession",
         args: [contractTeacherAddress, BigInt(selectedDuration)],
       });
+      const demoSessionId = result as unknown;
+      if (typeof demoSessionId === "bigint") {
+        const suffix = isAI ? `?ai=${encodeURIComponent(teacherAddress)}` : "";
+        router.push(`/session/${demoSessionId.toString()}${suffix}`);
+      }
     } catch (error) {
       console.error("Seans baslatilamadi:", error);
     } finally {
@@ -234,7 +239,8 @@ export default function TeacherDetailPage() {
                 Seansini Planla
               </h2>
               <p className="text-sm text-base-content/50 mb-6">
-                Bu v1 akisinda bakiye once kontrata yatirilir, seans bitince egitmen payini ceker ve kalan bakiye ogrenciye iade edilir.
+                Local demo modunda bakiye gercek MON transferi yapmadan eklenir. Gercek escrow akisi icin kontrat deploy edilip
+                frontend'e baglanmalidir.
               </p>
 
               <div className="mb-6">
@@ -271,7 +277,7 @@ export default function TeacherDetailPage() {
                 </div>
                 <div className="divider my-1" />
                 <div className="flex justify-between items-center">
-                  <span className="text-base-content/60 text-sm">Mevcut bakiye</span>
+                  <span className="text-base-content/60 text-sm">Mevcut demo bakiye</span>
                   <span className="font-semibold">{Number(formatEther(availableBalance)).toFixed(4)} MON</span>
                 </div>
               </div>
@@ -280,7 +286,7 @@ export default function TeacherDetailPage() {
                 <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4 mb-6">
                   <div className="flex items-center gap-2 mb-3">
                     <Wallet className="h-4 w-4 text-indigo-400" />
-                    <span className="font-semibold">Once escrow bakiyesi yukle</span>
+                    <span className="font-semibold">Once demo bakiye ekle</span>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <input
@@ -296,11 +302,11 @@ export default function TeacherDetailPage() {
                       onClick={handleFund}
                       disabled={!connectedAddress || isFunding}
                     >
-                      {isFunding ? <span className="loading loading-spinner" /> : "Bakiye Yukle"}
+                      {isFunding ? <span className="loading loading-spinner" /> : "Demo Bakiye Ekle"}
                     </button>
                   </div>
                   <p className="text-xs text-base-content/50 mt-2">
-                    Alternatif olarak ana sayfadaki demo panelinden de bakiye yukleyebilirsin.
+                    Bu local preview gercek MON cekmez; sadece seans ve AI chat akisini test etmek icin demo kredi ekler.
                   </p>
                 </div>
               )}

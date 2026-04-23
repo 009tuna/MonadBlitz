@@ -271,7 +271,7 @@ export const useDemoEscrowWriteContract = (connectedAddress?: string) => {
           store.activeSessionIds[senderKey] = newSessionId;
         });
         emitContractEvent("SessionStarted", { student: sender, sessionId: newSessionId });
-        return "0xdemo-start";
+        return newSessionId;
       }
 
       if (functionName === "stopSession") {
