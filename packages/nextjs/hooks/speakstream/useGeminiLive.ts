@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
 
 const GEMINI_LIVE_MODEL = "models/gemini-3.1-flash-live-preview";
 
@@ -223,7 +223,7 @@ export function useGeminiLive(): UseGeminiLiveReturn {
 
                       // Send response back to AI
                       session.sendRealtimeInput({
-                        functionResponses: [
+                        toolResponses: [
                           {
                             name,
                             response: { success: true },
@@ -289,7 +289,7 @@ export function useGeminiLive(): UseGeminiLiveReturn {
           },
           config: {
             generationConfig: {
-              responseModalities: ["audio"],
+              responseModalities: [Modality.AUDIO],
             },
             transcription: {
               enabled: true,
@@ -342,16 +342,11 @@ export function useGeminiLive(): UseGeminiLiveReturn {
           const base64 = btoa(binary);
 
           try {
-            sessionRef.current.send({
-              realtimeInput: {
-                audio: {
-                  data: base64,
-                  mimeType: "audio/pcm;rate=16000",
-                },
-              },
-            });
-          } catch {
-            // Session kapanmis olabilir
+            sessionRef.current.sendRealtimeInput([{
+              mimeType: "audio/pcm;rate=16000",
+              data: base64,
+            }]);
+          } catch {            // Session kapanmis olabilir
           }
         };
 

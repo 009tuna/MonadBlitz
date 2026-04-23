@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Modality, SchemaType } from "@google/genai";
 
 const GEMINI_LIVE_MODEL = "models/gemini-3.1-flash-live-preview";
 
@@ -45,7 +45,7 @@ Start by warmly greeting them and asking what they'd like to talk about today.`;
         liveConnectConstraints: {
           model: GEMINI_LIVE_MODEL,
           config: {
-            responseModalities: ["audio"],
+            responseModalities: [Modality.AUDIO],
             speechConfig: {
               voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoide" } },
             },
@@ -60,7 +60,7 @@ Start by warmly greeting them and asking what they'd like to talk about today.`;
                     description:
                       "Stops the current tutoring session. Call this when the student wants to end the lesson or says goodbye.",
                     parameters: {
-                      type: "OBJECT",
+                      type: SchemaType.OBJECT,
                       properties: {},
                     },
                   },
