@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI, Modality } from "@google/genai";
 
+const DEFAULT_GEMINI_LIVE_MODEL = "gemini-3.1-flash-live-preview";
+
 /**
  * POST /api/live
  * Gemini Live API icin ephemeral token uretir.
@@ -10,6 +12,7 @@ import { GoogleGenAI, Modality } from "@google/genai";
 export async function POST(request: NextRequest) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
+    const liveModel = process.env.GEMINI_LIVE_MODEL || DEFAULT_GEMINI_LIVE_MODEL;
 
     if (!apiKey) {
       return NextResponse.json(
@@ -41,7 +44,7 @@ Start by warmly greeting them and asking what they'd like to talk about today.`;
         uses: 1,
         expireTime: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
         liveConnectConstraints: {
-          model: "gemini-live-2.5-flash-native-audio",
+          model: liveModel,
           config: {
             responseModalities: [Modality.AUDIO],
             systemInstruction: {
@@ -54,7 +57,7 @@ Start by warmly greeting them and asking what they'd like to talk about today.`;
       },
     });
 
-    return NextResponse.json({ token: token.name });
+    return NextResponse.json({ token: token.name, model: liveModel });
   } catch (error: any) {
     console.error("Live API token hatasi:", error);
     return NextResponse.json(
