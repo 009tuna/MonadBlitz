@@ -49,6 +49,8 @@ const Home: NextPage = () => {
   const [isStopping, setIsStopping] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
 
   const contractTeacherAddress = getContractAddressForTeacher(selectedTeacherAddress);
   const selectedAiTeacher = isAITeacher(selectedTeacherAddress) ? getAITeacher(selectedTeacherAddress) : null;
@@ -113,6 +115,7 @@ const Home: NextPage = () => {
   });
 
   useEffect(() => {
+    setIsMounted(true);
     setNow(Math.floor(Date.now() / 1000));
     const timer = window.setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
     return () => window.clearInterval(timer);
@@ -339,7 +342,9 @@ const Home: NextPage = () => {
                     <Wallet className="h-4 w-4" />
                     Demo bakiyesi
                   </div>
-                  <div className="mt-2 text-3xl font-bold">{Number(formatEther(availableBalance)).toFixed(4)} MON</div>
+                  <div className="mt-2 text-3xl font-bold">
+                    {isMounted ? Number(formatEther(availableBalance)).toFixed(4) : "0.0000"} MON
+                  </div>
                 </div>
                 <div className="rounded-2xl border border-base-300 p-4">
                   <div className="flex items-center gap-2 text-sm text-base-content/60">
@@ -468,7 +473,7 @@ const Home: NextPage = () => {
             <div className="card-body">
               <h2 className="card-title">Canli session durumu</h2>
 
-              {!currentSession ? (
+              {!isMounted || !currentSession ? (
                 <div className="space-y-4 text-sm text-base-content/60">
                   <p>Henuz takip edilen bir session yok. Demo bakiye ekleyip bir tutor secerek akisi baslat.</p>
                   <Link href="/teachers" className="btn btn-outline">
@@ -577,13 +582,16 @@ function HumanTutorOption({
   isSelected: boolean;
   onSelect: (address: string) => void;
 }) {
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
+
   const { data: teacher } = useScaffoldReadContract({
     contractName: "StreamingTutorEscrow",
     functionName: "getTutor",
     args: [address],
   });
 
-  if (!teacher || !teacher.wallet || teacher.wallet === "0x0000000000000000000000000000000000000000") {
+  if (!isMounted || !teacher || !teacher.wallet || teacher.wallet === "0x0000000000000000000000000000000000000000") {
     return null;
   }
 
