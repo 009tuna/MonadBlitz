@@ -6,6 +6,7 @@ import { formatEther } from "viem";
 import { useAccount } from "wagmi";
 import { motion } from "framer-motion";
 import { Bot, Clock3, DollarSign, Shield, User } from "lucide-react";
+import { AITutorSession } from "~~/components/speakstream";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { getAITeacher, isAITeacher } from "~~/lib/teacherUtils";
 
@@ -135,6 +136,23 @@ export default function SessionPage() {
           {isActive ? "ACTIVE" : "STOPPED"}
         </div>
       </motion.div>
+
+      {isAI && aiTeacher && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-6 rounded-3xl border border-indigo-500/20 bg-base-100 p-6 shadow-xl"
+        >
+          <AITutorSession
+            teacherName={aiTeacher.name}
+            teacherBio={aiTeacher.bio}
+            targetLanguage={aiTeacher.targetLanguage}
+            persona={aiTeacher.persona}
+            avatar={aiTeacher.avatar}
+            isActive={isActive}
+          />
+        </motion.div>
+      )}
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="card bg-base-100 shadow-xl">
