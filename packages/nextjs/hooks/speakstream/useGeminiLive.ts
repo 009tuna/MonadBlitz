@@ -62,9 +62,7 @@ export function useGeminiLive(): UseGeminiLiveReturn {
   // Audio chunk'lari oynat
   const playAudioChunk = useCallback((base64Data: string) => {
     try {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new AudioContext({ sampleRate: 24000 });
-      }
+      if (!audioContextRef.current) return;
       const ctx = audioContextRef.current;
 
       // Base64 -> ArrayBuffer
@@ -89,8 +87,13 @@ export function useGeminiLive(): UseGeminiLiveReturn {
       source.connect(ctx.destination);
       source.start();
 
+      console.log("Playing AI audio chunk...");
       setAiSpeaking(true);
-      source.onended = () => setAiSpeaking(false);
+      source.onended = () => {
+        // Tum source'lar bittiginde aiSpeaking false olmali
+        // Basitlik icin son chunk bitince false yapiyoruz
+        setAiSpeaking(false);
+      };
     } catch (e) {
       console.error("Audio oynatma hatasi:", e);
     }
@@ -173,6 +176,14 @@ export function useGeminiLive(): UseGeminiLiveReturn {
     setError(null);
 
     try {
+      // AudioContext'i burada olustur/aktif et (browser kilidini acmak icin)
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+      }
+      if (audioContextRef.current.state === "suspended") {
+        await audioContextRef.current.resume();
+      }
+
       // 1. Ephemeral token al
       const tokenRes = await fetch("/api/live", {
         method: "POST",
