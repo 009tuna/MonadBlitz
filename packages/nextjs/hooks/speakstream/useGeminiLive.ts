@@ -3,6 +3,8 @@
 import { useState, useRef, useCallback } from "react";
 import { GoogleGenAI, Modality } from "@google/genai";
 
+const GEMINI_LIVE_MODEL = "gemini-3.1-flash-live-preview";
+
 export interface ChatMessage {
   role: "student" | "ai";
   text: string;
@@ -126,7 +128,7 @@ export function useGeminiLive(): UseGeminiLiveReturn {
       });
 
       const session = await ai.live.connect({
-        model: "gemini-live-2.5-flash-native-audio",
+        model: GEMINI_LIVE_MODEL,
         callbacks: {
           onopen: () => {
             setIsConnected(true);
