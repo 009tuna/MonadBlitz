@@ -41,6 +41,51 @@ export default function SessionPage() {
 
   const { writeContractAsync: writeContract } = useScaffoldWriteContract("StreamingTutorEscrow");
 
+  const handleStop = async () => {
+    setIsStopping(true);
+    try {
+      await writeContract({
+        functionName: "stopSession",
+        args: [sessionId],
+      });
+      await refetchSession();
+    } catch (error) {
+      console.error("Session stop hatasi:", error);
+    } finally {
+      setIsStopping(false);
+    }
+  };
+
+  const handleClaim = async () => {
+    setIsClaiming(true);
+    try {
+      await writeContract({
+        functionName: "claim",
+        args: [sessionId],
+      });
+      await refetchSession();
+    } catch (error) {
+      console.error("Claim hatasi:", error);
+    } finally {
+      setIsClaiming(false);
+    }
+  };
+
+  const handleRefund = async () => {
+    setIsRefunding(true);
+    try {
+      await writeContract({
+        functionName: "refundUnused",
+        args: [sessionId],
+      });
+      await refetchSession();
+    } catch (error) {
+      console.error("Refund hatasi:", error);
+    } finally {
+      setIsRefunding(false);
+    }
+  };
+
   useEffect(() => {
     setIsMounted(true);
     setNow(Math.floor(Date.now() / 1000));
@@ -119,51 +164,6 @@ export default function SessionPage() {
   const refundableAmount = BigInt(refundable);
   const isStudent = connectedAddress?.toLowerCase() === sessionData.student.toLowerCase();
   const isTutor = connectedAddress?.toLowerCase() === sessionData.tutor.toLowerCase();
-
-  const handleStop = async () => {
-    setIsStopping(true);
-    try {
-      await writeContract({
-        functionName: "stopSession",
-        args: [sessionId],
-      });
-      await refetchSession();
-    } catch (error) {
-      console.error("Session stop hatasi:", error);
-    } finally {
-      setIsStopping(false);
-    }
-  };
-
-  const handleClaim = async () => {
-    setIsClaiming(true);
-    try {
-      await writeContract({
-        functionName: "claim",
-        args: [sessionId],
-      });
-      await refetchSession();
-    } catch (error) {
-      console.error("Claim hatasi:", error);
-    } finally {
-      setIsClaiming(false);
-    }
-  };
-
-  const handleRefund = async () => {
-    setIsRefunding(true);
-    try {
-      await writeContract({
-        functionName: "refundUnused",
-        args: [sessionId],
-      });
-      await refetchSession();
-    } catch (error) {
-      console.error("Refund hatasi:", error);
-    } finally {
-      setIsRefunding(false);
-    }
-  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
