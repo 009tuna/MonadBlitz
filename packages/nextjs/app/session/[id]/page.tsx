@@ -45,8 +45,18 @@ export default function SessionPage() {
     setIsMounted(true);
     setNow(Math.floor(Date.now() / 1000));
     const timer = window.setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
+
+    const handleAIStop = () => {
+      console.log("AI requested session stop");
+      handleStop();
+    };
+    window.addEventListener("speakstream-ai-stop-session", handleAIStop);
+
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("speakstream-ai-stop-session", handleAIStop);
+    };
+  }, [handleStop]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
